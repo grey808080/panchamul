@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { Link } from '@/i18n/navigation';
+import Link from 'next/link';
 import { formatPrice } from '@/lib/utils/formatPrice';
 import { Button } from '@/components/ui/Button';
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
@@ -10,7 +10,7 @@ export default async function AdminProductsPage() {
 
   const { data: products } = await supabase
     .from('products')
-    .select('*, categories(name)')
+    .select('*, categories(name_en)')
     .order('created_at', { ascending: false });
 
   return (

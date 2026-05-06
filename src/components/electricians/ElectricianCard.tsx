@@ -29,8 +29,8 @@ export default function ElectricianCard({ electrician }: ElectricianCardProps) {
         </div>
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-slate-800">{electrician.name}</h3>
-          <Badge variant={electrician.available ? 'success' : 'default'}>
-            {electrician.available ? t('available') : t('unavailable')}
+          <Badge variant={electrician.is_available ? 'success' : 'default'}>
+            {electrician.is_available ? t('available') : t('unavailable')}
           </Badge>
         </div>
       </div>

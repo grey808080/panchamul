@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { Link } from '@/i18n/navigation';
+import Link from 'next/link';
 import { formatPrice } from '@/lib/utils/formatPrice';
 import { EyeIcon } from '@heroicons/react/24/outline';
 

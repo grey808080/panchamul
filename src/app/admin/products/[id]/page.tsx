@@ -2,17 +2,18 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import ProductForm from '@/components/admin/ProductForm';
 
-export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditProductPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const supabase = await createClient();
-  
-  const { data: categories } = await supabase.from('categories').select('*').order('name');
-  
-  const { data: product, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .single();
+
+  const [{ data: categories }, { data: product, error }] = await Promise.all([
+    supabase.from('categories').select('*').order('display_order', { ascending: true }),
+    supabase.from('products').select('*').eq('id', id).single(),
+  ]);
 
   if (error || !product) notFound();
 
