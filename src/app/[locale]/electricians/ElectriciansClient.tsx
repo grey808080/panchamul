@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import ElectricianCard from '@/components/electricians/ElectricianCard';
-import type { Electrician } from '@/types/database';
+import type { Tables } from '@/types/database';
+type Electrician = Tables<'electricians'>;
 
 interface ElectriciansClientProps {
   electricians: Electrician[];

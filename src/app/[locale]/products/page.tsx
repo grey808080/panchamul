@@ -1,14 +1,13 @@
 import { createPublicClient } from '@/lib/supabase/server';
-import { useTranslations } from 'next-intl';
 import ProductsPageClient from './ProductsPageClient';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Products',
-  description: 'Browse our complete collection of electrical products, including wires, switches, lighting, and appliances.',
+  title: 'Products | Panchamul Bijuli',
+  description: 'Browse our complete collection of electrical products.',
 };
 
-export const revalidate = 3600; // Cache for 1 hour
+export const revalidate = 3600;
 
 export default async function ProductsPage({
   searchParams,
@@ -18,53 +17,62 @@ export default async function ProductsPage({
   const params = await searchParams;
   const supabase = createPublicClient();
 
-  // Fetch categories
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('*')
-    .order('sort_order', { ascending: true });
+  const page = Number(params.page) || 1;
+  const perPage = 20;
+  const from = (page - 1) * perPage;
 
-  // Build products query
-  let query = supabase
-    .from('products')
-    .select('*, categories(name, name_np, slug)', { count: 'exact' })
-    .eq('active', true);
-
+  // Resolve category slug → id first if needed
+  let categoryId: string | null = null;
   if (params.category) {
     const { data: cat } = await supabase
       .from('categories')
       .select('id')
       .eq('slug', params.category)
       .single();
-    if (cat) query = query.eq('category_id', cat.id);
+    categoryId = cat?.id ?? null;
   }
 
-  if (params.brand) {
-    query = query.eq('brand', params.brand);
-  }
-
-  if (params.search) {
-    query = query.or(`name.ilike.%${params.search}%,name_np.ilike.%${params.search}%`);
-  }
-
-  const page = Number(params.page) || 1;
-  const perPage = 20;
-  const from = (page - 1) * perPage;
-
-  query = query.order('featured', { ascending: false }).order('created_at', { ascending: false });
-  query = query.range(from, from + perPage - 1);
-
-  const { data: products, count } = await query;
-
-  // Get unique brands
-  const { data: brandRows } = await supabase
+  // Build products query
+  let productsQuery = supabase
     .from('products')
-    .select('brand')
-    .eq('active', true)
-    .not('brand', 'is', null)
-    .order('brand');
+    .select('*, categories(name_en, name_np, slug)', { count: 'exact' })
+    .eq('is_active', true);
 
-  const brands = [...new Set(brandRows?.map((r) => r.brand).filter(Boolean) as string[])];
+  if (categoryId) productsQuery = productsQuery.eq('category_id', categoryId);
+  if (params.brand) productsQuery = productsQuery.eq('brand', params.brand);
+  if (params.search) {
+    productsQuery = productsQuery.or(
+      `name_en.ilike.%${params.search}%,name_np.ilike.%${params.search}%`
+    );
+  }
+
+  productsQuery = productsQuery
+    .order('is_featured', { ascending: false })
+    .order('created_at', { ascending: false })
+    .range(from, from + perPage - 1);
+
+  // Run categories, products, brands all in parallel
+  const [
+    { data: categories },
+    { data: products, count },
+    { data: brandRows },
+  ] = await Promise.all([
+    supabase
+      .from('categories')
+      .select('*')
+      .order('display_order', { ascending: true }),
+    productsQuery,
+    supabase
+      .from('products')
+      .select('brand')
+      .eq('is_active', true)
+      .not('brand', 'is', null)
+      .order('brand'),
+  ]);
+
+  const brands = [
+    ...new Set(brandRows?.map((r) => r.brand).filter(Boolean) as string[]),
+  ];
 
   return (
     <ProductsPageClient

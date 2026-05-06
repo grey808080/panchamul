@@ -1,7 +1,8 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import type { Category } from '@/types/database';
+import type { Tables } from '@/types/database';
+type Category = Tables<'categories'>;
 
 interface CategoryTabsProps {
   categories: Category[];

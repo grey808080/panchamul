@@ -7,7 +7,9 @@ import ProductGrid from '@/components/products/ProductGrid';
 import SearchBar from '@/components/products/SearchBar';
 import CategoryTabs from '@/components/products/CategoryTabs';
 import FilterSidebar from '@/components/products/FilterSidebar';
-import type { Product, Category } from '@/types/database';
+import type { Tables } from '@/types/database';
+type Product = Tables<'products'>;
+type Category = Tables<'categories'>;
 
 interface ProductsPageClientProps {
   products: Product[];

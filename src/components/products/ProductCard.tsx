@@ -7,7 +7,8 @@ import { ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { useCartStore } from '@/lib/store/cartStore';
 import { formatPrice } from '@/lib/utils/formatPrice';
 import { Badge } from '@/components/ui/Badge';
-import type { Product } from '@/types/database';
+import type { Tables } from '@/types/database';
+type Product = Tables<'products'>;
 
 interface ProductCardProps {
   product: Product;
@@ -69,7 +70,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Featured Badge */}
-        {product.featured && (
+        {product.is_featured && (
           <div className="absolute top-3 right-3 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-3 py-1 text-xs font-bold text-slate-900 shadow-lg">
             ⭐ {t('featured')}
           </div>

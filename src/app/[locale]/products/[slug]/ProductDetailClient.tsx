@@ -9,7 +9,8 @@ import { formatPrice } from '@/lib/utils/formatPrice';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import ProductCard from '@/components/products/ProductCard';
-import type { Product } from '@/types/database';
+import type { Tables } from '@/types/database';
+type Product = Tables<'products'>;
 
 interface ProductDetailClientProps {
   product: Product & { categories?: { name: string; name_np?: string; slug: string } };

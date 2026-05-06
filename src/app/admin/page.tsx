@@ -1,17 +1,30 @@
 import { createClient } from '@/lib/supabase/server';
 import { formatPrice } from '@/lib/utils/formatPrice';
-import { CurrencyDollarIcon, ShoppingCartIcon, ShoppingBagIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import {
+  CurrencyDollarIcon,
+  ShoppingCartIcon,
+  ShoppingBagIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/react/24/outline';
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
 
-  // Fetch stats
-  const { count: ordersCount } = await supabase.from('orders').select('*', { count: 'exact', head: true });
-  const { data: revenueData } = await supabase.from('orders').select('total_amount').eq('status', 'delivered');
-  const { count: productsCount } = await supabase.from('products').select('*', { count: 'exact', head: true });
-  const { count: lowStockCount } = await supabase.from('products').select('*', { count: 'exact', head: true }).lte('stock_qty', 5);
+  const [
+    { count: ordersCount },
+    { data: revenueData },
+    { count: productsCount },
+    { count: lowStockCount },
+    { data: recentOrders },
+  ] = await Promise.all([
+    supabase.from('orders').select('*', { count: 'exact', head: true }),
+    supabase.from('orders').select('total').eq('status', 'delivered'),
+    supabase.from('products').select('*', { count: 'exact', head: true }),
+    supabase.from('products').select('*', { count: 'exact', head: true }).lte('stock_qty', 5).gt('stock_qty', 0),
+    supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(5),
+  ]);
 
-  const totalRevenue = revenueData?.reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
+  const totalRevenue = revenueData?.reduce((sum, o) => sum + Number(o.total), 0) || 0;
 
   const stats = [
     { name: 'Total Orders', value: ordersCount || 0, icon: ShoppingCartIcon, color: 'text-blue-500', bg: 'bg-blue-100' },
@@ -19,13 +32,6 @@ export default async function AdminDashboard() {
     { name: 'Total Products', value: productsCount || 0, icon: ShoppingBagIcon, color: 'text-purple-500', bg: 'bg-purple-100' },
     { name: 'Low Stock Alerts', value: lowStockCount || 0, icon: ExclamationTriangleIcon, color: 'text-amber-500', bg: 'bg-amber-100' },
   ];
-
-  // Recent Orders
-  const { data: recentOrders } = await supabase
-    .from('orders')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(5);
 
   return (
     <div>
@@ -47,41 +53,40 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
-          <h2 className="text-lg font-bold text-slate-800 mb-4">Recent Orders</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-slate-50 text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 font-medium rounded-l-lg">Order</th>
-                  <th className="px-4 py-3 font-medium">Customer</th>
-                  <th className="px-4 py-3 font-medium">Total</th>
-                  <th className="px-4 py-3 font-medium rounded-r-lg">Status</th>
+      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
+        <h2 className="text-lg font-bold text-slate-800 mb-4">Recent Orders</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-slate-50 text-slate-500">
+              <tr>
+                <th className="px-4 py-3 font-medium rounded-l-lg">Order #</th>
+                <th className="px-4 py-3 font-medium">Customer</th>
+                <th className="px-4 py-3 font-medium">Total</th>
+                <th className="px-4 py-3 font-medium rounded-r-lg">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {recentOrders?.map((order) => (
+                <tr key={order.id} className="hover:bg-slate-50/50">
+                  <td className="px-4 py-3 font-mono font-medium text-primary">{order.order_number}</td>
+                  <td className="px-4 py-3">{order.customer_name}</td>
+                  <td className="px-4 py-3 font-medium">{formatPrice(order.total)}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                      ${order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                        order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                        order.status === 'out_for_delivery' ? 'bg-amber-100 text-amber-800' :
+                        'bg-slate-100 text-slate-800'}`}>
+                      {order.status?.replace(/_/g, ' ')}
+                    </span>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {recentOrders?.map((order) => (
-                  <tr key={order.id} className="hover:bg-slate-50/50">
-                    <td className="px-4 py-3 font-mono font-medium">{order.order_number}</td>
-                    <td className="px-4 py-3">{order.customer_name}</td>
-                    <td className="px-4 py-3 font-medium">{formatPrice(order.total_amount)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                        ${order.status === 'delivered' ? 'bg-green-100 text-green-800' : 
-                          order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
-                          'bg-slate-100 text-slate-800'}`}>
-                        {order.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {(!recentOrders || recentOrders.length === 0) && (
-              <p className="text-center text-slate-500 py-4">No recent orders</p>
-            )}
-          </div>
+              ))}
+            </tbody>
+          </table>
+          {(!recentOrders || recentOrders.length === 0) && (
+            <p className="text-center text-slate-500 py-8">No orders yet</p>
+          )}
         </div>
       </div>
     </div>

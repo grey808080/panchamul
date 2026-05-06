@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { createPublicClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 
 export default function AdminLogin() {
@@ -11,7 +11,7 @@ export default function AdminLogin() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = createPublicClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

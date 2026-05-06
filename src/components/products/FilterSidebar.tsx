@@ -3,7 +3,8 @@
 import { XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
-import type { Category } from '@/types/database';
+import type { Tables } from '@/types/database';
+type Category = Tables<'categories'>;
 
 interface FilterSidebarProps {
   categories: Category[];

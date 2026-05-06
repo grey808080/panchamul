@@ -1,39 +1,36 @@
-import { createClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
+import { createPublicClient } from '@/lib/supabase/server';
 import ProductDetailClient from './ProductDetailClient';
+import { notFound } from 'next/navigation';
 
 export default async function ProductDetailPage({
   params,
 }: {
   params: Promise<{ slug: string; locale: string }>;
 }) {
-  const { slug, locale } = await params;
-  const supabase = await createClient();
+  const { slug } = await params;
+  const supabase = createPublicClient();
 
-  const { data: product, error } = await supabase
+  const { data: product } = await supabase
     .from('products')
-    .select('*, categories(name, name_np, slug)')
+    .select('*, categories(name_en, name_np, slug)')
     .eq('slug', slug)
-    .eq('active', true)
+    .eq('is_active', true)
     .single();
 
-  if (error || !product) {
-    notFound();
-  }
+  if (!product) notFound();
 
-  // Fetch related products from same category
-  const { data: relatedProducts } = await supabase
+  const { data: related } = await supabase
     .from('products')
     .select('*')
-    .eq('category_id', product.category_id)
+    .eq('category_id', product.category_id!)
+    .eq('is_active', true)
     .neq('id', product.id)
-    .eq('active', true)
     .limit(4);
 
   return (
     <ProductDetailClient
       product={product}
-      relatedProducts={relatedProducts || []}
+      relatedProducts={related || []}
     />
   );
 }

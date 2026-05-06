@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/lib/utils/formatPrice';
-import { createClient } from '@/lib/supabase/client';
+import { createPublicClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 
 export default function OrderDetailClient({ order }: { order: any }) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = createPublicClient();
   const [status, setStatus] = useState(order.status);
   const [loading, setLoading] = useState(false);
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { createPublicClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import ImageUploader from '@/components/admin/ImageUploader';
 import Image from 'next/image';
@@ -9,7 +9,7 @@ import Image from 'next/image';
 export default function AdminElectriciansPage() {
   const [electricians, setElectricians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = createPublicClient();
 
   useEffect(() => {
     fetchElectricians();

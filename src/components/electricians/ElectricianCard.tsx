@@ -4,7 +4,8 @@ import Image from 'next/image';
 import { PhoneIcon } from '@heroicons/react/24/outline';
 import { Badge } from '@/components/ui/Badge';
 import { useTranslations } from 'next-intl';
-import type { Electrician } from '@/types/database';
+import type { Tables } from '@/types/database';
+type Electrician = Tables<'electricians'>;
 
 interface ElectricianCardProps {
   electrician: Electrician;

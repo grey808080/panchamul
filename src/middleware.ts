@@ -1,55 +1,58 @@
-import { NextRequest, NextResponse } from 'next/server';
-import createIntlMiddleware from 'next-intl/middleware';
-import { routing } from './i18n/routing';
-import { updateSession } from './lib/supabase/middleware';
-
-const handleI18nRouting = createIntlMiddleware(routing);
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  
-  // 1. Refresh Supabase session and handle auth for protected routes (like /admin)
-  const supabaseResponse = await updateSession(request);
-  
-  // If updateSession redirected (e.g. from /admin to /admin/login or /), return that redirect
-  if (supabaseResponse.status !== 200 && supabaseResponse.headers.has('location')) {
-    return supabaseResponse;
-  }
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
 
-  // 2. Skip i18n routing for /admin, /api, _next, and static files
-  if (
-    pathname.startsWith('/admin') ||
-    pathname.startsWith('/api') ||
-    pathname.startsWith('/_next') ||
-    pathname.includes('.') // like favicon.ico
-  ) {
-    return supabaseResponse;
-  }
-
-  // 3. Handle i18n routing for public pages
-  // Next-intl middleware creates its own response, but we need to merge cookies from supabaseResponse
-  const intlResponse = handleI18nRouting(request);
-  
-  // Merge the cookies set by Supabase into the intlResponse
-  supabaseResponse.headers.forEach((value, key) => {
-    if (key.toLowerCase() === 'set-cookie') {
-      intlResponse.headers.append('set-cookie', value);
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          )
+          supabaseResponse = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
     }
-  });
+  )
 
-  return intlResponse;
+  // Refresh session
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Protect admin routes
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (!user) {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
+
+    // Check is_admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.is_admin) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
+
+  return supabaseResponse
 }
 
 export const config = {
-  // Match only internationalized pathnames, API routes, and admin
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ]
-};
+  ],
+}

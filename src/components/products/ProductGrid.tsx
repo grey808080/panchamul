@@ -1,7 +1,8 @@
 'use client';
 
 import ProductCard from './ProductCard';
-import type { Product } from '@/types/database';
+import type { Tables } from '@/types/database';
+type Product = Tables<'products'>;
 import { useTranslations } from 'next-intl';
 
 interface ProductGridProps {

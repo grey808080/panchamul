@@ -6,6 +6,8 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import WhatsAppBubble from '@/components/layout/WhatsAppBubble';
 import { Toaster } from 'react-hot-toast';
+import { setRequestLocale } from 'next-intl/server';
+
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -20,6 +22,9 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
   
+  setRequestLocale(locale);
+
+
   if (!routing.locales.includes(locale as any)) {
     notFound();
   }

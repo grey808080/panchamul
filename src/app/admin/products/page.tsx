@@ -62,9 +62,9 @@ export default async function AdminProductsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      product.active ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
+                      product.is_active ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
                     }`}>
-                      {product.active ? 'Active' : 'Draft'}
+                      {product.is_active ? 'Active' : 'Draft'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">

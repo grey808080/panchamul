@@ -7,8 +7,8 @@ export default async function FeaturedProducts() {
   const { data: products } = await supabase
     .from('products')
     .select('*')
-    .eq('featured', true)
-    .eq('active', true)
+    .eq('is_featured', true)
+    .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(8);
 

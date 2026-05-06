@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import ProductCard from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/Button';
-import type { Product } from '@/types/database';
+import type { Tables, Enums } from '@/types/database';
+type Product = Tables<'products'>;
 
 interface FeaturedProductsClientProps {
   products: Product[];

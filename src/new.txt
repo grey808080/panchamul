@@ -4,8 +4,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import type { Tables, Enums } from '@/types/database';
-type GalleryItem = Tables<'gallery'>;
+import type { GalleryItem } from '@/types/database';
 
 interface GalleryClientProps {
   items: GalleryItem[];
@@ -35,8 +34,9 @@ export default function GalleryClient({ items }: GalleryClientProps) {
           <button
             key={type || 'all'}
             onClick={() => setFilter(type)}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${filter === type ? 'bg-primary text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+            className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${
+              filter === type ? 'bg-primary text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
           >
             {type ? t(`type_${type}`) : t('all')}
           </button>

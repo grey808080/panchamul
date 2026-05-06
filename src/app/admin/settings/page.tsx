@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { createPublicClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const supabase = createClient();
+  const supabase = createPublicClient();
 
   useEffect(() => {
     fetchSettings();
