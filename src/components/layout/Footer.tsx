@@ -2,28 +2,30 @@
 
 import { BoltIcon } from '@heroicons/react/24/outline';
 import { Link } from '@/i18n/navigation';
-
-const footerLinks = {
-  shop: [
-    { href: '/products', label: 'All Products' },
-    { href: '/products?category=wires-cables', label: 'Wires & Cables' },
-    { href: '/products?category=lights-fittings', label: 'Lights & Fittings' },
-    { href: '/products?category=solar', label: 'Solar Products' },
-  ],
-  services: [
-    { href: '/electricians', label: 'Our Electricians' },
-    { href: '/services', label: 'Services' },
-    { href: '/contact', label: 'Book Service' },
-  ],
-  company: [
-    { href: '/about', label: 'About Us' },
-    { href: '/gallery', label: 'Gallery' },
-    { href: '/contact', label: 'Contact' },
-  ],
-};
+import { useTranslations } from 'next-intl';
 
 export default function Footer() {
+  const t = useTranslations('footer');
   const currentYear = new Date().getFullYear();
+
+  const footerLinks = {
+    shop: [
+      { href: '/products', label: t('allProducts') },
+      { href: '/products?category=wires-cables', label: t('wiresAndCables') },
+      { href: '/products?category=lights-fittings', label: t('lightsAndFittings') },
+      { href: '/products?category=solar', label: t('solar') },
+    ],
+    services: [
+      { href: '/electricians', label: t('ourElectricians') },
+      { href: '/services', label: t('services') },
+      { href: '/contact', label: t('bookService') },
+    ],
+    company: [
+      { href: '/about', label: t('aboutUs') },
+      { href: '/gallery', label: t('gallery') },
+      { href: '/contact', label: t('contact') },
+    ],
+  };
 
   return (
     <footer className="bg-slate-900 text-slate-300">
@@ -41,22 +43,22 @@ export default function Footer() {
               </div>
             </Link>
             <p className="mt-4 text-sm text-slate-400 leading-relaxed">
-              Powering Kohalpur since 2010. Your trusted electrical store for quality products and professional electrician services.
+              {t('tagline')}
             </p>
             <div className="mt-5 space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-secondary">📞</span>
-                <a href="tel:+977XXXXXXXXX" className="hover:text-white transition-colors">+977-XXXXXXXXX</a>
+                <a href="tel:+9779849401009" className="hover:text-white transition-colors">+977-9849401009</a>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-secondary">💬</span>
-                <a
-                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '977XXXXXXXXXX'}`}
+                
+                  <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '9849401009'}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors"
                 >
-                  WhatsApp Us
+                  {t('whatsapp')}
                 </a>
               </div>
               <div className="flex items-center gap-2 text-sm">
@@ -68,7 +70,7 @@ export default function Footer() {
 
           {/* Shop Links */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">Shop</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">{t('shop')}</h3>
             <ul className="space-y-2.5">
               {footerLinks.shop.map(({ href, label }) => (
                 <li key={href}>
@@ -82,7 +84,7 @@ export default function Footer() {
 
           {/* Services Links */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">Services</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">{t('services')}</h3>
             <ul className="space-y-2.5">
               {footerLinks.services.map(({ href, label }) => (
                 <li key={href}>
@@ -96,7 +98,7 @@ export default function Footer() {
 
           {/* Company Links */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">Company</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">{t('company')}</h3>
             <ul className="space-y-2.5">
               {footerLinks.company.map(({ href, label }) => (
                 <li key={href}>
@@ -110,13 +112,13 @@ export default function Footer() {
             {/* Trust Badges */}
             <div className="mt-6 flex flex-col gap-2">
               <div className="flex items-center gap-2 text-xs text-slate-400">
-                <span className="text-secondary">✅</span> 15+ Years Experience
+                <span className="text-secondary">✅</span> {t('yearsExp')}
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-400">
-                <span className="text-secondary">🚚</span> Free Delivery in Banke
+                <span className="text-secondary">🚚</span> {t('freeDelivery')}
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-400">
-                <span className="text-secondary">⭐</span> 500+ Products
+                <span className="text-secondary">⭐</span> {t('products')}
               </div>
             </div>
           </div>
@@ -124,7 +126,7 @@ export default function Footer() {
 
         <div className="mt-12 border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-slate-500">
-            © {currentYear} Panchamul Bijuli. All rights reserved.
+            © {currentYear} Panchamul Bijuli. {t('rights')}
           </p>
           <p className="text-xs text-slate-500">
             Kohalpur, Banke, Nepal 🇳🇵

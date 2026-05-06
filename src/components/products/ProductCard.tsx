@@ -100,11 +100,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="mt-auto flex items-end justify-between gap-2">
           <div className="flex flex-col">
             <span className="text-lg font-bold text-slate-900">
-              {formatPrice(product.price)}
+              {formatPrice(product.price, locale)}
             </span>
             {hasDiscount && (
               <span className="text-xs text-slate-400 line-through">
-                {formatPrice(product.compare_price!)}
+                {formatPrice(product.compare_price!, locale)}
               </span>
             )}
           </div>

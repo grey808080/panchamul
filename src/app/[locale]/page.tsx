@@ -34,7 +34,6 @@ export default async function HomePage({
       .limit(8),
   ]);
 
-  console.log('PAGE LOCALE:', locale); // debug — remove after confirmed
 
   return (
     <div>

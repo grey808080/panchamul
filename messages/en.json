@@ -199,5 +199,25 @@
     "loading": "Loading...",
     "error": "An error occurred.",
     "success": "Success!"
+  },
+  "footer": {
+  "tagline": "Powering Kohalpur since 2010. Your trusted electrical store for quality products and professional electrician services.",
+  "whatsapp": "WhatsApp Us",
+  "shop": "Shop",
+  "services": "Services",
+  "company": "Company",
+  "allProducts": "All Products",
+  "wiresAndCables": "Wires & Cables",
+  "lightsAndFittings": "Lights & Fittings",
+  "solar": "Solar Products",
+  "ourElectricians": "Our Electricians",
+  "bookService": "Book Service",
+  "aboutUs": "About Us",
+  "contact": "Contact",
+  "yearsExp": "15+ Years Experience",
+  "freeDelivery": "Free Delivery in Banke",
+  "products": "500+ Products",
+  "rights": "All rights reserved.",
+  "gallery": "Gallery"
   }
 }
