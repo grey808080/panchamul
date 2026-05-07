@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { formatPrice } from '@/lib/utils/formatPrice';
+import Link from 'next/link';
 import {
   CurrencyDollarIcon,
   ShoppingCartIcon,
@@ -27,10 +28,10 @@ export default async function AdminDashboard() {
   const totalRevenue = revenueData?.reduce((sum, o) => sum + Number(o.total), 0) || 0;
 
   const stats = [
-    { name: 'Total Orders', value: ordersCount || 0, icon: ShoppingCartIcon, color: 'text-blue-500', bg: 'bg-blue-100' },
-    { name: 'Total Revenue', value: formatPrice(totalRevenue), icon: CurrencyDollarIcon, color: 'text-green-500', bg: 'bg-green-100' },
-    { name: 'Total Products', value: productsCount || 0, icon: ShoppingBagIcon, color: 'text-purple-500', bg: 'bg-purple-100' },
-    { name: 'Low Stock Alerts', value: lowStockCount || 0, icon: ExclamationTriangleIcon, color: 'text-amber-500', bg: 'bg-amber-100' },
+    { name: 'Total Orders', value: ordersCount || 0, icon: ShoppingCartIcon, color: 'text-blue-500', bg: 'bg-blue-100', href: '/admin/orders' },
+    { name: 'Total Revenue', value: formatPrice(totalRevenue), icon: CurrencyDollarIcon, color: 'text-green-500', bg: 'bg-green-100', href: '/admin/orders' },
+    { name: 'Total Products', value: productsCount || 0, icon: ShoppingBagIcon, color: 'text-purple-500', bg: 'bg-purple-100', href: '/admin/products' },
+    { name: 'Low Stock Alerts', value: lowStockCount || 0, icon: ExclamationTriangleIcon, color: 'text-amber-500', bg: 'bg-amber-100', href: '/admin/products' },
   ];
 
   return (
@@ -39,7 +40,7 @@ export default async function AdminDashboard() {
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         {stats.map((stat) => (
-          <div key={stat.name} className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
+          <Link href={stat.href} key={stat.name} className="rounded-2xl bg-white p-4 lg:p-6 shadow-sm ring-1 ring-slate-200/60 active:scale-95 transition-transform block hover:shadow-md">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">{stat.name}</p>
@@ -49,13 +50,42 @@ export default async function AdminDashboard() {
                 <stat.icon className={`h-6 w-6 ${stat.color}`} />
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
+      <div className="rounded-2xl bg-white p-4 lg:p-6 shadow-sm ring-1 ring-slate-200/60">
         <h2 className="text-lg font-bold text-slate-800 mb-4">Recent Orders</h2>
-        <div className="overflow-x-auto">
+
+        {/* Mobile cards view */}
+        <div className="lg:hidden space-y-3 mb-4">
+          {recentOrders?.map((order) => (
+            <Link href={`/admin/orders/${order.id}`} key={order.id}
+              className="block rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono font-bold text-primary text-sm">{order.order_number}</span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize
+                  ${order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                    order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                    'bg-slate-100 text-slate-800'}`}>
+                  {order.status?.replace(/_/g, ' ')}
+                </span>
+              </div>
+              <p className="font-medium text-slate-900">{order.customer_name}</p>
+              <p className="text-sm text-slate-500">{order.customer_phone}</p>
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-sm text-slate-400">{order.payment_method?.toUpperCase()}</span>
+                <span className="font-bold text-slate-900">{formatPrice(order.total)}</span>
+              </div>
+            </Link>
+          ))}
+          {(!recentOrders || recentOrders.length === 0) && (
+            <p className="text-center text-slate-500 py-8">No orders yet</p>
+          )}
+        </div>
+
+        {/* Desktop table view */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
@@ -92,3 +122,4 @@ export default async function AdminDashboard() {
     </div>
   );
 }
+  

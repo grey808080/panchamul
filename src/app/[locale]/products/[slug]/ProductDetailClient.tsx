@@ -13,7 +13,7 @@ import type { Tables } from '@/types/database';
 type Product = Tables<'products'>;
 
 interface ProductDetailClientProps {
-  product: Product & { categories?: { name: string; name_np?: string; slug: string } };
+  product: Product & { categories?: { name_en: string; name_np?: string; slug: string } };
   relatedProducts: Product[];
 }
 
@@ -32,9 +32,13 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
     ? Math.round(((product.compare_price! - product.price) / product.compare_price!) * 100)
     : 0;
 
-  const stockStatus = product.stock_qty <= 0 ? 'out' : product.stock_qty <= 5 ? 'low' : 'in';
+  const stock = product.stock_qty ?? 0;
+  const stockStatus = stock <= 0 ? 'out' : stock <= 5 ? 'low' : 'in';
+  const decrementDisabled = quantity <= 1;
+  const incrementDisabled = quantity >= stock;
 
   const handleAddToCart = () => {
+    if (stock <= 0) return;
     addItem({
       id: product.id,
       name_en: product.name_en,
@@ -43,7 +47,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       price: product.price,
       image: images[0],
       quantity,
-      stock_qty: product.stock_qty,
+      stock_qty: stock,
     });
   };
 
@@ -62,7 +66,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               <span className="hover:text-primary cursor-pointer">
                 {locale === 'np' && product.categories.name_np
                   ? product.categories.name_np
-                  : product.categories.name}
+                  : product.categories.name_en}
               </span>
             </>
           )}
@@ -129,12 +133,9 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 {stockStatus === 'in'
                   ? t('inStock')
                   : stockStatus === 'low'
-                  ? `${t('lowStock')} (${product.stock_qty} left)`
+                  ? `${t('lowStock')} (${stock} left)`
                   : t('outOfStock')}
               </Badge>
-              {product.unit && (
-                <span className="text-sm text-slate-500">per {product.unit}</span>
-              )}
             </div>
 
             {/* Description */}
@@ -149,7 +150,8 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               <div className="flex items-center rounded-xl ring-1 ring-slate-200 overflow-hidden">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="flex h-12 w-12 items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors"
+                  disabled={decrementDisabled}
+                  className="flex h-12 w-12 items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <MinusIcon className="h-4 w-4" />
                 </button>
@@ -157,8 +159,9 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   {quantity}
                 </span>
                 <button
-                  onClick={() => setQuantity(Math.min(product.stock_qty, quantity + 1))}
-                  className="flex h-12 w-12 items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors"
+                  onClick={() => setQuantity(Math.min(stock, quantity + 1))}
+                  disabled={incrementDisabled || stock <= 0}
+                  className="flex h-12 w-12 items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <PlusIcon className="h-4 w-4" />
                 </button>
@@ -166,7 +169,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
               <Button
                 onClick={handleAddToCart}
-                disabled={product.stock_qty <= 0}
+                disabled={stock <= 0}
                 size="lg"
                 className="flex-1"
               >

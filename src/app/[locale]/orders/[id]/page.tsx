@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
-import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { formatPrice } from '@/lib/utils/formatPrice';
 
@@ -17,7 +16,7 @@ export default async function OrderTrackingPage({
 
   const { data: order, error } = await supabase
     .from('orders')
-    .select('*, order_items(*, products(name, name_np, images))')
+    .select('*')
     .eq('order_number', id)
     .single();
 
@@ -71,7 +70,7 @@ export default async function OrderTrackingPage({
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div><span className="text-slate-500">{t('customerName')}</span><p className="font-medium">{order.customer_name}</p></div>
             <div><span className="text-slate-500">{t('phone')}</span><p className="font-medium">{order.customer_phone}</p></div>
-            <div><span className="text-slate-500">{t('address')}</span><p className="font-medium">{order.customer_address}</p></div>
+            <div><span className="text-slate-500">{t('address')}</span><p className="font-medium">{order.delivery_address || order.customer_address}</p></div>
             <div><span className="text-slate-500">{t('payment')}</span><p className="font-medium capitalize">{order.payment_method}</p></div>
           </div>
         </div>
@@ -80,19 +79,19 @@ export default async function OrderTrackingPage({
         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
           <h2 className="text-lg font-semibold text-slate-800 mb-4">{t('items')}</h2>
           <div className="space-y-3">
-            {order.order_items?.map((item: any) => (
-              <div key={item.id} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
+            {(order.items || []).map((item: any, index: number) => (
+              <div key={`${item.product_id}-${index}`} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
                 <div>
-                  <p className="font-medium text-slate-800">{item.products?.name}</p>
+                  <p className="font-medium text-slate-800">{item.product_name || item.name || `Item ${index + 1}`}</p>
                   <p className="text-sm text-slate-500">× {item.quantity}</p>
                 </div>
-                <span className="font-semibold">{formatPrice(item.unit_price * item.quantity)}</span>
+                <span className="font-semibold">{formatPrice((item.unit_price || 0) * item.quantity)}</span>
               </div>
             ))}
           </div>
           <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between text-lg font-bold">
             <span>{t('total')}</span>
-            <span>{formatPrice(order.total_amount)}</span>
+            <span>{formatPrice(order.total ?? order.total_amount ?? 0)}</span>
           </div>
         </div>
       </div>

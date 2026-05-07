@@ -27,7 +27,7 @@ export default function CategoryTabs({ categories, selectedSlug, onChange }: Cat
         {t('allCategories')}
       </button>
       {categories.map((cat) => {
-        const label = locale === 'np' && cat.name_np ? cat.name_np : cat.name;
+        const label = locale === 'np' && cat.name_np ? cat.name_np : cat.name_en;
         return (
           <button
             key={cat.id}

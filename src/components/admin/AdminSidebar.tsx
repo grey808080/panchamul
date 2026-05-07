@@ -81,3 +81,41 @@ export default function AdminSidebar() {
     </div>
   );
 }
+
+
+
+// src/components/admin/AdminSidebar.tsx
+// Add this at the bottom of the file — mobile bottom nav
+
+export function AdminBottomNav() {
+  const pathname = usePathname();
+
+  const tabs = [
+    { name: 'Home', href: '/admin', icon: HomeIcon },
+    { name: 'Products', href: '/admin/products', icon: ShoppingBagIcon },
+    { name: 'Orders', href: '/admin/orders', icon: ShoppingCartIcon },
+    { name: 'Team', href: '/admin/electricians', icon: UserGroupIcon },
+    { name: 'More', href: '/admin/settings', icon: Cog6ToothIcon },
+  ];
+
+  return (
+    <nav className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-slate-200 flex lg:hidden">
+      {tabs.map((tab) => {
+        const isActive = pathname === tab.href ||
+          (tab.href !== '/admin' && pathname.startsWith(tab.href));
+        return (
+          <Link
+            key={tab.name}
+            href={tab.href}
+            className={`flex-1 flex flex-col items-center justify-center py-2 text-[10px] font-medium transition-colors ${
+              isActive ? 'text-primary' : 'text-slate-400'
+            }`}
+          >
+            <tab.icon className={`h-5 w-5 mb-0.5 ${isActive ? 'text-primary' : 'text-slate-400'}`} />
+            {tab.name}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}

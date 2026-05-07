@@ -40,6 +40,9 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => {
               const itemName = locale === 'np' && item.name_np ? item.name_np : item.name_en;
+              const stockQty = item.stock_qty ?? 0;
+              const decrementDisabled = item.quantity <= 1;
+              const incrementDisabled = stockQty > 0 ? item.quantity >= stockQty : true;
               return (
                 <div key={item.id} className="flex gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/60">
                   <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100">
@@ -56,15 +59,30 @@ export default function CartPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center rounded-lg ring-1 ring-slate-200 overflow-hidden">
-                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="flex h-8 w-8 items-center justify-center text-slate-600 hover:bg-slate-50"><MinusIcon className="h-3 w-3" /></button>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          disabled={decrementDisabled}
+                          className="flex h-8 w-8 items-center justify-center text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <MinusIcon className="h-3 w-3" />
+                        </button>
                         <span className="flex h-8 w-10 items-center justify-center text-sm font-semibold border-x border-slate-200">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="flex h-8 w-8 items-center justify-center text-slate-600 hover:bg-slate-50"><PlusIcon className="h-3 w-3" /></button>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          disabled={incrementDisabled}
+                          className="flex h-8 w-8 items-center justify-center text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <PlusIcon className="h-3 w-3" />
+                        </button>
                       </div>
                       <div className="flex items-center gap-4">
                         <span className="font-semibold text-slate-800">{formatPrice(item.price * item.quantity)}</span>
                         <button onClick={() => removeItem(item.id)} className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500"><TrashIcon className="h-4 w-4" /></button>
                       </div>
                     </div>
+                    {stockQty > 0 && incrementDisabled && (
+                      <p className="mt-1 text-xs font-medium text-amber-600">{t('stockLimit')}</p>
+                    )}
                   </div>
                 </div>
               );

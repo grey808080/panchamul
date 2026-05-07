@@ -7,6 +7,8 @@ import { useTranslations } from 'next-intl';
 export default function Footer() {
   const t = useTranslations('footer');
   const currentYear = new Date().getFullYear();
+  const mapUrl =
+    'https://www.google.com/maps/place/Panchamul+Bijuli+Bhandar/@28.1977792,81.7001386,17z/data=!3m1!4b1!4m6!3m5!1s0x39986fa9a7aa7f9f:0xc7a8dcc50b9d2fd1!8m2!3d28.1977792!4d81.7001386!16s%2Fg%2F11rf6r7b9p?hl=en-US&entry=ttu';
 
   const footerLinks = {
     shop: [
@@ -63,7 +65,9 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-secondary">📍</span>
-                <span>Kohalpur, Banke, Nepal</span>
+                <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                  Panchamul Bijuli Bhandar, Kohalpur
+                </a>
               </div>
             </div>
           </div>

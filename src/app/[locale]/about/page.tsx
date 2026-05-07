@@ -9,6 +9,8 @@ export const metadata: Metadata = {
 
 export default async function AboutPage() {
   const t = await getTranslations('about');
+  const mapUrl =
+    'https://www.google.com/maps/place/Panchamul+Bijuli+Bhandar/@28.1977792,81.7001386,17z/data=!3m1!4b1!4m6!3m5!1s0x39986fa9a7aa7f9f:0xc7a8dcc50b9d2fd1!8m2!3d28.1977792!4d81.7001386!16s%2Fg%2F11rf6r7b9p?hl=en-US&entry=ttu';
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -55,14 +57,14 @@ export default async function AboutPage() {
               <MapPinIcon className="h-5 w-5 text-primary mt-0.5" />
               <div>
                 <p className="font-medium text-slate-800">{t('address')}</p>
-                <p className="text-sm text-slate-500">Kohalpur, Banke, Nepal</p>
+                <p className="text-sm text-slate-500">Panchamul Bijuli Bhandar, Kohalpur, Banke, Nepal</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <PhoneIcon className="h-5 w-5 text-primary mt-0.5" />
               <div>
                 <p className="font-medium text-slate-800">{t('phone')}</p>
-                <p className="text-sm text-slate-500">+977-XXXXXXXXXX</p>
+                <p className="text-sm text-slate-500">+977-9849401009</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -78,9 +80,20 @@ export default async function AboutPage() {
         {/* Map */}
         <section>
           <h2 className="text-2xl font-bold text-slate-900 mb-4">{t('locationTitle')}</h2>
+          <div className="mb-4">
+            <a
+              href={mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-primary/40 hover:text-primary"
+            >
+              <MapPinIcon className="h-4 w-4" />
+              Open on Google Maps
+            </a>
+          </div>
           <div className="aspect-video rounded-2xl bg-slate-200 overflow-hidden ring-1 ring-slate-200/60">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3517.3!2d81.67!3d28.2!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sKohalpur!5e0!3m2!1sen!2snp"
+              src="https://www.google.com/maps?q=28.1977792,81.7001386&z=17&output=embed"
               width="100%"
               height="100%"
               style={{ border: 0 }}

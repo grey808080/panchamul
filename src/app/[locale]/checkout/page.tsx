@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useCartStore } from '@/lib/store/cartStore';
 import { formatPrice } from '@/lib/utils/formatPrice';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { generateOrderNumber } from '@/lib/utils/orderNumber';
 
 export default function CheckoutPage() {
+  const locale = useLocale();
   const t = useTranslations('checkout');
   const router = useRouter();
   const { items, getTotal, clearCart } = useCartStore();
@@ -42,19 +43,29 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customer: form,
-          items: items.map(i => ({ product_id: i.id, quantity: i.quantity, price: i.price })),
+          items: items.map(i => ({
+            product_id: i.id,
+            name_en: i.name_en,
+            name_np: i.name_np || null,
+            quantity: i.quantity,
+            price: i.price,
+          })),
           payment_method: paymentMethod,
           order_number: generateOrderNumber(),
           total: getTotal(),
         }),
       });
 
-      if (!res.ok) throw new Error('Order failed');
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Order failed');
+      }
       const data = await res.json();
       clearCart();
       router.push(`/orders/${data.order_number}`);
-    } catch {
-      setErrors({ submit: t('orderFailed') });
+    } catch (error) {
+      const message = error instanceof Error && error.message ? error.message : t('orderFailed');
+      setErrors({ submit: message });
     } finally {
       setLoading(false);
     }
@@ -66,7 +77,7 @@ export default function CheckoutPage() {
     { id: 'cod', label: t('cod'), icon: '💵' },
     { id: 'esewa', label: 'eSewa', icon: '📱' },
     { id: 'khalti', label: 'Khalti', icon: '💜' },
-    { id: 'bank', label: t('bankTransfer'), icon: '🏦' },
+    { id: 'bank_transfer', label: t('bankTransfer'), icon: '🏦' },
   ];
 
   if (items.length === 0) {
@@ -139,7 +150,9 @@ export default function CheckoutPage() {
                 <div className="space-y-3 mb-4">
                   {items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-slate-600">{item.name_en} × {item.quantity}</span>
+                      <span className="text-slate-600">
+                        {(locale === 'np' && item.name_np ? item.name_np : item.name_en)} × {item.quantity}
+                      </span>
                       <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
                     </div>
                   ))}

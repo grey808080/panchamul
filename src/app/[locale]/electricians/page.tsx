@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
 import ElectriciansClient from './ElectriciansClient';
+import { getTranslations } from 'next-intl/server';
 
 export const revalidate = 3600;
 
 export default async function ElectriciansPage() {
+  const t = await getTranslations('electricians');
   const supabase = await createClient();
 
   const { data: electricians } = await supabase
@@ -11,5 +13,17 @@ export default async function ElectriciansPage() {
     .select('*')
     .order('display_order', { ascending: true });
 
-  return <ElectriciansClient electricians={electricians || []} />;
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <section className="bg-gradient-to-r from-primary to-primary-dark px-4 py-14">
+        <div className="mx-auto max-w-6xl text-center">
+          <h1 className="text-3xl font-bold text-white md:text-5xl">{t('title')}</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-blue-100/90 md:text-lg">{t('subtitle')}</p>
+        </div>
+      </section>
+      <section className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+        <ElectriciansClient electricians={electricians || []} />
+      </section>
+    </div>
+  );
 }

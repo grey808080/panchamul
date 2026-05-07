@@ -77,7 +77,8 @@
     "total": "Total",
     "checkout": "Proceed to Checkout",
     "remove": "Remove",
-    "itemCount": "{count} items"
+    "itemCount": "{count} items",
+    "stockLimit": "Maximum available stock reached"
   },
   "checkout": {
     "title": "Checkout",
@@ -135,7 +136,11 @@
   "services": {
     "title": "Our Services",
     "subtitle": "Comprehensive electrical services for your home and business.",
-    "noServices": "Services coming soon"
+    "noServices": "Services coming soon",
+    "badge": "Professional electrical solutions",
+    "visitStore": "Need help choosing the right service?",
+    "ctaTitle": "Visit our shop or contact us for custom support",
+    "openMaps": "Open Maps"
   },
   "gallery": {
     "title": "Gallery",

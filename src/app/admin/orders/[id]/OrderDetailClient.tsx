@@ -45,19 +45,19 @@ export default function OrderDetailClient({ order }: { order: any }) {
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
             <h2 className="text-lg font-bold text-slate-800 mb-4">Order Items</h2>
             <div className="space-y-4">
-              {order.order_items?.map((item: any) => (
-                <div key={item.id} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-0 last:pb-0">
+              {(order.items || []).map((item: any, index: number) => (
+                <div key={`${item.product_id}-${index}`} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-0 last:pb-0">
                   <div className="flex items-center gap-4">
-                    <div className="font-medium text-slate-800">{item.products?.name}</div>
+                    <div className="font-medium text-slate-800">{item.name_en || item.product_name || item.name || `Item ${index + 1}`}</div>
                     <div className="text-sm text-slate-500">× {item.quantity}</div>
                   </div>
-                  <div className="font-semibold">{formatPrice(item.unit_price * item.quantity)}</div>
+                  <div className="font-semibold">{formatPrice((item.unit_price || 0) * item.quantity)}</div>
                 </div>
               ))}
             </div>
             <div className="mt-6 pt-4 border-t border-slate-200 flex justify-between items-center">
               <span className="font-medium text-slate-500">Total Amount</span>
-              <span className="text-xl font-bold text-slate-900">{formatPrice(order.total_amount)}</span>
+              <span className="text-xl font-bold text-slate-900">{formatPrice(order.total ?? order.total_amount ?? 0)}</span>
             </div>
           </div>
         </div>
@@ -68,7 +68,7 @@ export default function OrderDetailClient({ order }: { order: any }) {
             <div className="space-y-3 text-sm">
               <div><span className="text-slate-500 block">Name</span><p className="font-medium">{order.customer_name}</p></div>
               <div><span className="text-slate-500 block">Phone</span><p className="font-medium">{order.customer_phone}</p></div>
-              <div><span className="text-slate-500 block">Address</span><p className="font-medium">{order.customer_address}, {order.customer_city}</p></div>
+              <div><span className="text-slate-500 block">Address</span><p className="font-medium">{order.delivery_address || order.customer_address}, {order.delivery_city || order.customer_city}</p></div>
             </div>
           </div>
 

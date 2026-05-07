@@ -24,17 +24,18 @@ export default function ProductCard({ product }: ProductCardProps) {
   const discountPercent = hasDiscount
     ? Math.round(((product.compare_price! - product.price) / product.compare_price!) * 100)
     : 0;
+  const stockQty = product.stock_qty ?? 0;
 
-  const stockStatus = product.stock_qty <= 0
+  const stockStatus = stockQty <= 0
     ? 'out'
-    : product.stock_qty <= 5
+    : stockQty <= 5
     ? 'low'
     : 'in';
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (product.stock_qty <= 0) return;
+    if (stockQty <= 0) return;
     addItem({
       id: product.id,
       name_en: product.name_en,
@@ -43,7 +44,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       price: product.price,
       image: product.images?.[0] || '/placeholder-product.png',
       quantity: 1,
-      stock_qty: product.stock_qty,
+      stock_qty: stockQty,
     });
   };
 
@@ -79,7 +80,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Quick Add to Cart */}
         <button
           onClick={handleAddToCart}
-          disabled={product.stock_qty <= 0}
+          disabled={stockQty <= 0}
           className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-primary shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
           aria-label={t('addToCart')}
         >

@@ -9,6 +9,8 @@ export default function ContactClient() {
   const t = useTranslations('contact');
   const [form, setForm] = useState({ name: '', phone: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const mapUrl =
+    'https://www.google.com/maps/place/Panchamul+Bijuli+Bhandar/@28.1977792,81.7001386,17z/data=!3m1!4b1!4m6!3m5!1s0x39986fa9a7aa7f9f:0xc7a8dcc50b9d2fd1!8m2!3d28.1977792!4d81.7001386!16s%2Fg%2F11rf6r7b9p?hl=en-US&entry=ttu';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,9 +19,9 @@ export default function ContactClient() {
   };
 
   const contactInfo = [
-    { icon: MapPinIcon, label: t('address'), value: 'Kohalpur, Banke, Nepal', color: 'text-primary' },
-    { icon: PhoneIcon, label: t('phone'), value: '+977-XXXXXXXXXX', color: 'text-green-600' },
-    { icon: EnvelopeIcon, label: t('email'), value: 'info@panchamulbijuli.com', color: 'text-amber-600' },
+    { icon: MapPinIcon, label: t('address'), value: 'Panchamul Bijuli Bhandar, Kohalpur, Banke, Nepal', color: 'text-primary' },
+    { icon: PhoneIcon, label: t('phone'), value: '+977-9849401009', color: 'text-green-600' },
+    { icon: EnvelopeIcon, label: t('email'), value: 'panchamulbijuli@gmail.com', color: 'text-amber-600' },
     { icon: ClockIcon, label: t('hours'), value: t('hoursDetail'), color: 'text-purple-600' },
   ];
 
@@ -45,6 +47,15 @@ export default function ContactClient() {
                 </div>
               </div>
             ))}
+            <a
+              href={mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/10"
+            >
+              <MapPinIcon className="h-4 w-4" />
+              Open Shop in Google Maps
+            </a>
           </div>
 
           {/* Contact Form */}

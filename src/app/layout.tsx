@@ -3,7 +3,7 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 export const metadata: Metadata = {
   title: {
@@ -24,6 +24,16 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+  },
+  manifest: '/site.webmanifest',
+};
+
+export const viewport: Viewport = {
+  themeColor: '#1E3A8A',
 };
 
 export default function RootLayout({

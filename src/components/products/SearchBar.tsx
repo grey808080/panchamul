@@ -13,7 +13,7 @@ interface SearchBarProps {
 export default function SearchBar({ value, onChange, placeholder }: SearchBarProps) {
   const t = useTranslations('products');
   const [localValue, setLocalValue] = useState(value);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setLocalValue(value);
@@ -21,7 +21,7 @@ export default function SearchBar({ value, onChange, placeholder }: SearchBarPro
 
   const handleChange = (newValue: string) => {
     setLocalValue(newValue);
-    clearTimeout(debounceRef.current);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       onChange(newValue);
     }, 300);

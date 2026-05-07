@@ -39,7 +39,7 @@ export default async function AdminOrdersPage() {
                     <p className="font-medium text-slate-900">{order.customer_name}</p>
                     <p className="text-xs text-slate-500">{order.customer_phone}</p>
                   </td>
-                  <td className="px-6 py-4 font-medium">{formatPrice(order.total_amount)}</td>
+                  <td className="px-6 py-4 font-medium">{formatPrice(order.total ?? order.total_amount ?? 0)}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
                       order.status === 'delivered' ? 'bg-green-100 text-green-800' :

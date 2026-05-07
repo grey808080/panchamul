@@ -72,7 +72,7 @@ export default function FilterSidebar({
             <span className="text-sm text-slate-700">{t('allCategories')}</span>
           </label>
           {categories.map((cat) => {
-            const label = locale === 'np' && cat.name_np ? cat.name_np : cat.name;
+            const label = locale === 'np' && cat.name_np ? cat.name_np : cat.name_en;
             return (
               <label
                 key={cat.id}
