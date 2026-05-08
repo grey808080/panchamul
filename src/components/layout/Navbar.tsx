@@ -11,6 +11,7 @@ import CartDrawer from '../cart/CartDrawer';
 import AuthModal from '../ui/AuthModal';
 
 const navLinks = [
+  { href: '/', key: 'home' },
   { href: '/products', key: 'products' },
   { href: '/electricians', key: 'electricians' },
   { href: '/services', key: 'services' },

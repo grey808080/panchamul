@@ -38,9 +38,6 @@ export default async function AccountOrdersPage({
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
-  console.log('DEBUG user:', user?.id);
-  console.log('DEBUG orders:', JSON.stringify(orders));
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="mx-auto max-w-4xl px-4 py-10">
