@@ -121,7 +121,9 @@
     "status_received": "Received",
     "status_processing": "Processing",
     "status_out_for_delivery": "Out for Delivery",
-    "status_delivered": "Delivered"
+    "status_delivered": "Delivered",
+    "noOrdersHint": "Your orders will appear here once you shop.",
+    "backToAccount": "Back to Account"
   },
   "electricians": {
     "title": "Our Expert Electricians",

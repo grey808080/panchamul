@@ -1,99 +1,122 @@
 import { createClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { redirect } from 'next/navigation';
+import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import { formatPrice } from '@/lib/utils/formatPrice';
 
-const statusSteps = ['received', 'processing', 'out_for_delivery', 'delivered'];
+export const dynamic = 'force-dynamic';
 
-export default async function OrderTrackingPage({
+const statusColors: Record<string, string> = {
+  received:         'bg-blue-50 text-blue-700',
+  processing:       'bg-amber-50 text-amber-700',
+  out_for_delivery: 'bg-purple-50 text-purple-700',
+  delivered:        'bg-green-50 text-green-700',
+  cancelled:        'bg-red-50 text-red-700',
+};
+
+export default async function AccountOrdersPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ locale: string }>;
 }) {
-  const { id } = await params;
-  const supabase = await createClient();
-  const t = await getTranslations('orders');
+  const { locale } = await params;
+  setRequestLocale(locale);
 
-  const { data: order, error } = await supabase
+  const t = await getTranslations('account');
+  const tO = await getTranslations('orders');
+
+  // Auth check
+  const userClient = await createClient();
+  const { data: { user } } = await userClient.auth.getUser();
+  if (!user) redirect(`/${locale}/account`);
+
+  // Fetch orders via admin client (bypasses RLS), filter by user_id
+  const supabase = createAdminClient();
+  const { data: orders } = await supabase
     .from('orders')
     .select('*')
-    .eq('order_number', id)
-    .single();
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
 
-  if (error || !order) notFound();
-
-  const currentStep = statusSteps.indexOf(order.status);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <div className="mx-auto max-w-3xl px-4 py-10">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-            <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900">{t('confirmed')}</h1>
-          <p className="mt-1 text-slate-500">{t('orderNumber')}: <span className="font-mono font-bold text-primary">{order.order_number}</span></p>
+      <div className="mx-auto max-w-4xl px-4 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-slate-900">{t('myOrders')}</h1>
+          <Link
+            href="/account"
+            className="text-sm text-slate-500 hover:text-primary transition-colors"
+          >
+            ← My Account
+          </Link>
         </div>
 
-        {/* Status Timeline */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60 mb-8">
-          <h2 className="text-lg font-semibold text-slate-800 mb-6">{t('status')}</h2>
-          <div className="flex justify-between relative">
-            <div className="absolute top-5 left-0 right-0 h-0.5 bg-slate-200" />
-            <div className="absolute top-5 left-0 h-0.5 bg-primary transition-all" style={{ width: `${(currentStep / (statusSteps.length - 1)) * 100}%` }} />
-            {statusSteps.map((step, i) => (
-              <div key={step} className="relative flex flex-col items-center z-10">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
-                  i <= currentStep ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-slate-400'
-                }`}>
-                  {i <= currentStep ? (
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                  ) : (
-                    <span className="text-sm font-medium">{i + 1}</span>
-                  )}
-                </div>
-                <span className={`mt-2 text-xs font-medium text-center ${i <= currentStep ? 'text-primary' : 'text-slate-400'}`}>
-                  {t(`status_${step}`)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        {!orders?.length ? (
+          <div className="rounded-2xl bg-white p-12 shadow-sm ring-1 ring-slate-200/60 text-center">
+            <div className="mx-auto mb-4 h-16 w-16 flex items-center justify-center rounded-full bg-slate-100">
+              <span className="text-3xl">📦</span>
+            </div>
+            <h2 className="text-lg font-semibold text-slate-800">No orders yet</h2>
+            <p className="mt-1 text-sm text-slate-500">Your orders will appear here once you shop.</p>
 
-        {/* Order Details */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60 mb-8">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t('details')}</h2>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div><span className="text-slate-500">{t('customerName')}</span><p className="font-medium">{order.customer_name}</p></div>
-            <div><span className="text-slate-500">{t('phone')}</span><p className="font-medium">{order.customer_phone}</p></div>
-            <div><span className="text-slate-500">{t('address')}</span><p className="font-medium">{order.delivery_address || order.customer_address}</p></div>
-            <div><span className="text-slate-500">{t('payment')}</span><p className="font-medium capitalize">{order.payment_method}</p></div>
+            <Link
+              href="/products"
+              className="mt-5 inline-block rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark transition-colors"
+            >
+              Browse Products
+            </Link>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            {orders.map((order) => {
+              const itemCount = (order.items as any[])?.length ?? 0;
+              const statusClass = statusColors[order.status ?? ''] ?? 'bg-slate-100 text-slate-600';
 
-        {/* Items */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t('items')}</h2>
-          <div className="space-y-3">
-            {(order.items || []).map((item: any, index: number) => (
-              <div key={`${item.product_id}-${index}`} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
-                <div>
-                  <p className="font-medium text-slate-800">{item.product_name || item.name || `Item ${index + 1}`}</p>
-                  <p className="text-sm text-slate-500">× {item.quantity}</p>
-                </div>
-                <span className="font-semibold">{formatPrice((item.unit_price || 0) * item.quantity)}</span>
-              </div>
-            ))}
+              return (
+                <Link
+                  key={order.id}
+                  href={`/orders/${order.order_number}`}
+                  className="block rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono font-bold text-primary text-sm">
+                          {order.order_number}
+                        </span>
+                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusClass}`}>
+                          {order.status ? tO(`status_${order.status}`) : ''}
+                        </span>
+                      </div>
+
+                      {/* Items preview */}
+                      <p className="mt-1.5 text-sm text-slate-600 line-clamp-1">
+                        {(order.items as any[])?.map((i: any) => i.name_en).join(', ')}
+                      </p>
+
+                      <p className="mt-1 text-xs text-slate-400">
+                        {itemCount} item{itemCount !== 1 ? 's' : ''} ·{' '}
+                        {order.created_at ? new Date(order.created_at).toLocaleDateString('en-NP', {
+                          year: 'numeric', month: 'short', day: 'numeric',
+                        }) : ''}
+                      </p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-slate-900">{formatPrice(order.total ?? 0)}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 capitalize">
+                        {order.payment_method?.replace('_', ' ')}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between text-lg font-bold">
-            <span>{t('total')}</span>
-            <span>{formatPrice(order.total ?? order.total_amount ?? 0)}</span>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

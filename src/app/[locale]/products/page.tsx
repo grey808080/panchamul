@@ -7,12 +7,20 @@ export const metadata: Metadata = {
   description: 'Browse our complete collection of electrical products.',
 };
 
-export const revalidate = 3600;
+// force-dynamic because URL searchParams change the results
+export const dynamic = 'force-dynamic';
 
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; brand?: string; search?: string; page?: string }>;
+  searchParams: Promise<{
+    category?: string;
+    brand?: string;
+    search?: string;
+    page?: string;
+    minPrice?: string;
+    maxPrice?: string;
+  }>;
 }) {
   const params = await searchParams;
   const supabase = createPublicClient();
@@ -20,30 +28,33 @@ export default async function ProductsPage({
   const page = Number(params.page) || 1;
   const perPage = 20;
   const from = (page - 1) * perPage;
+  const minPrice = Number(params.minPrice) || 0;
+  const maxPrice = Number(params.maxPrice) || 0; // 0 = no upper limit
 
-  // Resolve category slug → id first if needed
-  let categoryId: string | null = null;
-  if (params.category) {
-    const { data: cat } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('slug', params.category)
-      .single();
-    categoryId = cat?.id ?? null;
-  }
-
-  // Build products query
+  // Build products query — join categories so we get name_en/slug inline,
+  // avoiding a separate sequential category slug→id lookup
   let productsQuery = supabase
     .from('products')
-    .select('*, categories(name_en, name_np, slug)', { count: 'exact' })
+    .select('*, categories!inner(id, name_en, name_np, slug)', { count: 'exact' })
     .eq('is_active', true);
 
-  if (categoryId) productsQuery = productsQuery.eq('category_id', categoryId);
-  if (params.brand) productsQuery = productsQuery.eq('brand', params.brand);
+  // Filter by category slug directly via the join (no extra round-trip)
+  if (params.category) {
+    productsQuery = productsQuery.eq('categories.slug', params.category);
+  }
+  if (params.brand) {
+    productsQuery = productsQuery.eq('brand', params.brand);
+  }
   if (params.search) {
     productsQuery = productsQuery.or(
       `name_en.ilike.%${params.search}%,name_np.ilike.%${params.search}%`
     );
+  }
+  if (minPrice > 0) {
+    productsQuery = productsQuery.gte('price', minPrice);
+  }
+  if (maxPrice > 0) {
+    productsQuery = productsQuery.lte('price', maxPrice);
   }
 
   productsQuery = productsQuery
@@ -51,7 +62,7 @@ export default async function ProductsPage({
     .order('created_at', { ascending: false })
     .range(from, from + perPage - 1);
 
-  // Run categories, products, brands all in parallel
+  // All three queries run in parallel — no sequential waterfall
   const [
     { data: categories },
     { data: products, count },
@@ -85,6 +96,8 @@ export default async function ProductsPage({
       initialCategory={params.category || null}
       initialBrand={params.brand || null}
       initialSearch={params.search || ''}
+      initialMinPrice={minPrice}
+      initialMaxPrice={maxPrice}
     />
   );
 }

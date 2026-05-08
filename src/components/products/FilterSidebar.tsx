@@ -1,8 +1,7 @@
 'use client';
 
-import { XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { FunnelIcon } from '@heroicons/react/24/outline';
 import { useLocale, useTranslations } from 'next-intl';
-import { useState } from 'react';
 import type { Tables } from '@/types/database';
 type Category = Tables<'categories'>;
 
@@ -16,7 +15,11 @@ interface FilterSidebarProps {
   priceRange: [number, number];
   maxPrice: number;
   onPriceChange: (range: [number, number]) => void;
+  /** Called when the user finishes dragging the price slider (mouseup/touchend) */
+  onPriceCommit?: (range: [number, number]) => void;
   onReset: () => void;
+  /** When true, renders filter content without the sticky wrapper (used inside the mobile bottom sheet) */
+  inlineMode?: boolean;
 }
 
 export default function FilterSidebar({
@@ -29,20 +32,25 @@ export default function FilterSidebar({
   priceRange,
   maxPrice,
   onPriceChange,
+  onPriceCommit,
   onReset,
+  inlineMode = false,
 }: FilterSidebarProps) {
   const locale = useLocale();
   const t = useTranslations('products');
-  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const hasFilters = selectedCategory || selectedBrand || priceRange[0] > 0 || priceRange[1] < maxPrice;
+  const hasFilters =
+    selectedCategory ||
+    selectedBrand ||
+    priceRange[0] > 0 ||
+    priceRange[1] < maxPrice;
 
   const filterContent = (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-          <FunnelIcon className="h-5 w-5" />
+        <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+          <FunnelIcon className="h-4 w-4" />
           {t('filters')}
         </h3>
         {hasFilters && (
@@ -57,14 +65,14 @@ export default function FilterSidebar({
 
       {/* Categories */}
       <div>
-        <h4 className="mb-3 text-sm font-semibold text-slate-700 uppercase tracking-wider">
+        <h4 className="mb-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
           {t('category')}
         </h4>
-        <div className="space-y-1.5">
-          <label className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-50 transition-colors">
+        <div className="space-y-1">
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50 transition-colors">
             <input
               type="radio"
-              name="category"
+              name="filter-category"
               checked={selectedCategory === null}
               onChange={() => onCategoryChange(null)}
               className="h-4 w-4 text-primary focus:ring-primary/30 border-slate-300"
@@ -76,11 +84,11 @@ export default function FilterSidebar({
             return (
               <label
                 key={cat.id}
-                className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-50 transition-colors"
+                className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50 transition-colors"
               >
                 <input
                   type="radio"
-                  name="category"
+                  name="filter-category"
                   checked={selectedCategory === cat.slug}
                   onChange={() => onCategoryChange(cat.slug)}
                   className="h-4 w-4 text-primary focus:ring-primary/30 border-slate-300"
@@ -98,14 +106,14 @@ export default function FilterSidebar({
       {/* Brands */}
       {brands.length > 0 && (
         <div>
-          <h4 className="mb-3 text-sm font-semibold text-slate-700 uppercase tracking-wider">
+          <h4 className="mb-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             {t('brand')}
           </h4>
-          <div className="space-y-1.5">
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-50 transition-colors">
+          <div className="space-y-1">
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50 transition-colors">
               <input
                 type="radio"
-                name="brand"
+                name="filter-brand"
                 checked={selectedBrand === null}
                 onChange={() => onBrandChange(null)}
                 className="h-4 w-4 text-primary focus:ring-primary/30 border-slate-300"
@@ -115,11 +123,11 @@ export default function FilterSidebar({
             {brands.map((brand) => (
               <label
                 key={brand}
-                className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-50 transition-colors"
+                className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50 transition-colors"
               >
                 <input
                   type="radio"
-                  name="brand"
+                  name="filter-brand"
                   checked={selectedBrand === brand}
                   onChange={() => onBrandChange(brand)}
                   className="h-4 w-4 text-primary focus:ring-primary/30 border-slate-300"
@@ -133,11 +141,11 @@ export default function FilterSidebar({
 
       {/* Price Range */}
       <div>
-        <h4 className="mb-3 text-sm font-semibold text-slate-700 uppercase tracking-wider">
+        <h4 className="mb-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
           {t('priceRange')}
         </h4>
         <div className="space-y-3 px-1">
-          <div className="flex justify-between text-xs text-slate-500">
+          <div className="flex justify-between text-xs font-medium text-slate-600">
             <span>रु {priceRange[0].toLocaleString()}</span>
             <span>रु {priceRange[1].toLocaleString()}</span>
           </div>
@@ -145,52 +153,31 @@ export default function FilterSidebar({
             type="range"
             min={0}
             max={maxPrice}
+            step={500}
             value={priceRange[1]}
             onChange={(e) => onPriceChange([priceRange[0], Number(e.target.value)])}
-            className="w-full accent-primary"
+            onMouseUp={(e) => onPriceCommit?.([priceRange[0], Number((e.target as HTMLInputElement).value)])}
+            onTouchEnd={(e) => onPriceCommit?.([priceRange[0], Number((e.target as HTMLInputElement).value)])}
+            className="w-full accent-primary cursor-pointer"
           />
+          <div className="flex justify-between text-[10px] text-slate-400">
+            <span>रु 0</span>
+            <span>रु {maxPrice.toLocaleString()}</span>
+          </div>
         </div>
       </div>
     </div>
   );
 
+  // inlineMode: no wrapper (used inside mobile bottom sheet or parent manages layout)
+  if (inlineMode) {
+    return filterContent;
+  }
+
+  // Desktop: sticky sidebar card
   return (
-    <>
-      {/* Mobile Filter Toggle */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 lg:hidden"
-      >
-        <FunnelIcon className="h-4 w-4" />
-        {t('filters')}
-        {hasFilters && (
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
-            !
-          </span>
-        )}
-      </button>
-
-      {/* Mobile Overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl animate-slide-up">
-            <div className="flex justify-end mb-2">
-              <button onClick={() => setMobileOpen(false)} className="rounded-full p-2 hover:bg-slate-100 transition-colors">
-                <XMarkIcon className="h-5 w-5 text-slate-500" />
-              </button>
-            </div>
-            {filterContent}
-          </div>
-        </div>
-      )}
-
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:block w-64 shrink-0">
-        <div className="sticky top-24 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
-          {filterContent}
-        </div>
-      </div>
-    </>
+    <div className="sticky top-24 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
+      {filterContent}
+    </div>
   );
 }

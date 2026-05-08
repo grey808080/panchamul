@@ -77,47 +77,41 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
 
-        {/* Quick Add to Cart */}
+        {/* Quick Add to Cart — always visible on mobile, hover on desktop */}
         <button
           onClick={handleAddToCart}
           disabled={stockQty <= 0}
-          className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-primary shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
+          className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-primary shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0"
           aria-label={t('addToCart')}
         >
-          <ShoppingCartIcon className="h-5 w-5" />
+          <ShoppingCartIcon className="h-4 w-4" />
         </button>
       </div>
 
       {/* Info */}
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3 className="text-sm font-medium text-slate-800 line-clamp-2 group-hover:text-primary transition-colors">
+      <div className="flex flex-1 flex-col gap-1.5 p-3 sm:p-4">
+        <h3 className="text-xs sm:text-sm font-medium text-slate-800 line-clamp-2 group-hover:text-primary transition-colors">
           {name}
         </h3>
 
         {product.brand && (
-          <p className="text-xs text-slate-400">{product.brand}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400">{product.brand}</p>
         )}
 
-        <div className="mt-auto flex items-end justify-between gap-2">
+        <div className="mt-auto flex items-end justify-between gap-1">
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-slate-900">
-              {formatPrice(product.price, locale)}
+            <span className="text-sm sm:text-lg font-bold text-slate-900">
+              {formatPrice(product.price)}
             </span>
             {hasDiscount && (
-              <span className="text-xs text-slate-400 line-through">
-                {formatPrice(product.compare_price!, locale)}
+              <span className="text-[10px] sm:text-xs text-slate-400 line-through">
+                {formatPrice(product.compare_price!)}
               </span>
             )}
           </div>
-
-          <Badge
-            variant={stockStatus === 'in' ? 'success' : stockStatus === 'low' ? 'warning' : 'danger'}
-          >
-            {stockStatus === 'in'
-              ? t('inStock')
-              : stockStatus === 'low'
-              ? t('lowStock')
-              : t('outOfStock')}
+          <Badge variant={stockStatus === 'in' ? 'success' : stockStatus === 'low' ? 'warning' : 'danger'}
+            className="text-[9px] sm:text-xs px-1.5 py-0.5">
+            {stockStatus === 'in' ? t('inStock') : stockStatus === 'low' ? t('lowStock') : t('outOfStock')}
           </Badge>
         </div>
       </div>
