@@ -21,9 +21,9 @@ export default async function LocaleLayout({
   params: Promise<{locale: string}>
 }) {
   const { locale } = await params;
-  
-  setRequestLocale(locale);
 
+  // setRequestLocale must be called before any rendering or notFound()
+  setRequestLocale(locale);
 
   if (!routing.locales.includes(locale as any)) {
     notFound();

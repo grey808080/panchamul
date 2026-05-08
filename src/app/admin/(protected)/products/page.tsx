@@ -7,9 +7,14 @@ import { formatPrice } from '@/lib/utils/formatPrice';
 import { Button } from '@/components/ui/Button';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import type { Tables } from '@/types';
+
+type ProductWithCategory = Tables<'products'> & {
+  categories: Pick<Tables<'categories'>, 'name_en'> | null;
+};
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -22,7 +27,7 @@ export default function AdminProductsPage() {
       .from('products')
       .select('*, categories(name_en)')
       .order('created_at', { ascending: false });
-    setProducts(data || []);
+    setProducts((data as ProductWithCategory[]) || []);
     setLoading(false);
   };
 
@@ -109,7 +114,7 @@ export default function AdminProductsPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-slate-500 text-xs">
-                  {(product.categories as any)?.name_en || '—'}
+                  {product.categories?.name_en || '—'}
                 </td>
                 <td className="px-6 py-4">
                   <p className="font-semibold">{formatPrice(product.price)}</p>
@@ -191,7 +196,7 @@ export default function AdminProductsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-slate-900 truncate">{product.name_en}</p>
-                <p className="text-xs text-slate-400">{(product.categories as any)?.name_en || '—'}</p>
+                <p className="text-xs text-slate-400">{product.categories?.name_en || '—'}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="font-bold text-slate-900">{formatPrice(product.price)}</span>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${

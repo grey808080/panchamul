@@ -5,8 +5,9 @@ import CategoryGrid from '@/components/home/CategoryGrid';
 import FeaturedProductsClient from '@/components/home/FeaturedProductsClient';
 import { setRequestLocale } from 'next-intl/server';
 
-// Remove revalidate — let each locale cache separately
-export const dynamic = 'force-dynamic';
+// Revalidate every 5 minutes — balances freshness with caching.
+// Each locale is cached independently by Next.js since locale is a route segment.
+export const revalidate = 300;
 
 export default async function HomePage({
   params,

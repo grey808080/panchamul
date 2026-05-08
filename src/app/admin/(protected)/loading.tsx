@@ -1,18 +1,15 @@
-// Simple skeleton component
-function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse bg-slate-200 rounded-lg ${className}`} />;
-}
+import { AdminStatsSkeleton, AdminTableSkeleton } from '@/components/ui/Skeleton';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function AdminLoading() {
   return (
-    <div className="space-y-4 p-8">
-      <Skeleton className="h-8 w-48 mb-8" />
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-32 w-full" />
-        ))}
+    <div>
+      <Skeleton className="mb-8 h-8 w-36" />
+      <AdminStatsSkeleton />
+      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
+        <Skeleton className="mb-4 h-6 w-32" />
+        <AdminTableSkeleton rows={5} cols={4} />
       </div>
-      <Skeleton className="h-96 w-full" />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { createPublicClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import NewOrdersBadge from './NewOrdersBadge';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
@@ -64,6 +65,7 @@ export default function AdminSidebar() {
             >
               <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
               {item.name}
+              {item.name === 'Orders' && <NewOrdersBadge />}
             </Link>
           );
         })}

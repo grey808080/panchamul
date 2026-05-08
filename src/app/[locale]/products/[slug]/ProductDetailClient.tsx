@@ -3,12 +3,14 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { ShoppingCartIcon, MinusIcon, PlusIcon, PhoneIcon } from '@heroicons/react/24/outline';
+import { ShoppingCartIcon, MinusIcon, PlusIcon, PhoneIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useCartStore } from '@/lib/store/cartStore';
 import { formatPrice } from '@/lib/utils/formatPrice';
+import { productDetailUrl, productThumbStripUrl } from '@/lib/utils/imageUrl';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import ProductCard from '@/components/products/ProductCard';
+import toast from 'react-hot-toast';
 import type { Tables } from '@/types/database';
 type Product = Tables<'products'>;
 
@@ -23,6 +25,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   const addItem = useCartStore((s) => s.addItem);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [cartAdded, setCartAdded] = useState(false);
 
   const name = locale === 'np' && product.name_np ? product.name_np : product.name_en;
   const description = locale === 'np' && product.description_np ? product.description_np : product.description_en;
@@ -38,7 +41,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   const incrementDisabled = quantity >= stock;
 
   const handleAddToCart = () => {
-    if (stock <= 0) return;
+    if (stock <= 0 || cartAdded) return;
     addItem({
       id: product.id,
       name_en: product.name_en,
@@ -49,6 +52,9 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       quantity,
       stock_qty: stock,
     });
+    setCartAdded(true);
+    toast.success(`${quantity > 1 ? `${quantity}× ` : ''}${product.name_en} added to cart`, { duration: 2500 });
+    setTimeout(() => setCartAdded(false), 2000);
   };
 
   const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '977XXXXXXXXXX';
@@ -79,11 +85,12 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
           <div className="space-y-4">
             <div className="relative aspect-square overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60">
               <Image
-                src={images[selectedImage]}
+                src={productDetailUrl(images[selectedImage])}
                 alt={name}
                 fill
                 className="object-cover"
                 priority
+                quality={85}
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
               {hasDiscount && (
@@ -104,7 +111,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                         : 'ring-transparent hover:ring-slate-300'
                     }`}
                   >
-                    <Image src={img} alt={`${name} ${i + 1}`} fill className="object-cover" sizes="80px" />
+                    <Image src={productThumbStripUrl(img)} alt={`${name} ${i + 1}`} fill className="object-cover" sizes="160px" />
                   </button>
                 ))}
               </div>
@@ -169,12 +176,21 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
               <Button
                 onClick={handleAddToCart}
-                disabled={stock <= 0}
+                disabled={stock <= 0 || cartAdded}
                 size="lg"
-                className="flex-1"
+                className={`flex-1 transition-all ${cartAdded ? 'bg-green-500 hover:bg-green-500' : ''}`}
               >
-                <ShoppingCartIcon className="mr-2 h-5 w-5" />
-                {t('addToCart')}
+                {cartAdded ? (
+                  <>
+                    <CheckIcon className="mr-2 h-5 w-5" />
+                    Added to Cart
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCartIcon className="mr-2 h-5 w-5" />
+                    {t('addToCart')}
+                  </>
+                )}
               </Button>
             </div>
 

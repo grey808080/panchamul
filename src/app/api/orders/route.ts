@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { notifyNewOrder } from '@/lib/notifications/orderNotification';
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,23 +68,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
     }
 
-    // Decrement stock in parallel
-    const productIds = normalizedItems.map((i: { product_id: string }) => i.product_id);
-    const { data: productRows } = await supabase
-      .from('products')
-      .select('id, stock_qty')
-      .in('id', productIds);
-
-    if (productRows?.length) {
-      await Promise.all(
-        normalizedItems.map((item: { product_id: string; quantity: number }) => {
-          const product = productRows.find((p) => p.id === item.product_id);
-          if (!product) return Promise.resolve();
-          const nextStock = Math.max(0, (product.stock_qty ?? 0) - item.quantity);
-          return supabase.from('products').update({ stock_qty: nextStock }).eq('id', item.product_id);
+    // Atomically decrement stock — only decrements if sufficient stock exists.
+    // Uses a single UPDATE per product to avoid the read-then-write race condition
+    // that would allow overselling when concurrent orders arrive.
+    await Promise.all(
+      normalizedItems.map((item: { product_id: string; quantity: number }) =>
+        supabase.rpc('decrement_stock', {
+          p_product_id: item.product_id,
+          p_quantity: item.quantity,
         })
-      );
-    }
+      )
+    );
+
+    // Fire-and-forget notification — never blocks the order response
+    notifyNewOrder({
+      order_number: order.order_number,
+      customer_name: customer.name,
+      customer_phone: customer.phone,
+      total: finalTotal,
+      payment_method,
+      items_count: normalizedItems.length,
+    }).catch((err) => console.error('[Notification] Unhandled error:', err));
 
     return NextResponse.json({ order_number: order.order_number, id: order.id });
   } catch (error) {

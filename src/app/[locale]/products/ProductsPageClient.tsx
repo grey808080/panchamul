@@ -82,7 +82,14 @@ export default function ProductsPageClient({
       if ((merged.minPrice as number) > 0) sp.set('minPrice', String(merged.minPrice));
       if ((merged.maxPrice as number) < MAX_PRICE) sp.set('maxPrice', String(merged.maxPrice));
       const qs = sp.toString();
-      router.push(qs ? `${pathname}?${qs}` : pathname);
+      // Use replace so filter changes don't pollute browser history —
+      // the user can still go Back to leave the products page entirely.
+      const isPagination = 'page' in overrides && Object.keys(overrides).length === 1;
+      if (isPagination) {
+        router.push(qs ? `${pathname}?${qs}` : pathname);
+      } else {
+        router.replace(qs ? `${pathname}?${qs}` : pathname);
+      }
     },
     [category, brand, search, priceRange, router, pathname]
   );

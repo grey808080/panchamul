@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPublicClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import toast from 'react-hot-toast';
+import type { User } from '@supabase/supabase-js';
 import {
   PhoneIcon,
   EnvelopeIcon,
@@ -53,9 +54,13 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [adminUser, setAdminUser] = useState<User | null>(null);
   const supabase = createPublicClient();
 
-  useEffect(() => { fetchSettings(); }, []);
+  useEffect(() => {
+    fetchSettings();
+    supabase.auth.getUser().then(({ data }) => setAdminUser(data.user));
+  }, []);
 
   const fetchSettings = async () => {
     const { data } = await supabase.from('site_settings').select('*');
@@ -172,7 +177,7 @@ export default function AdminSettingsPage() {
             <h2 className="text-base font-bold text-slate-800">Admin Account</h2>
           </div>
           <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
-            <p>Logged in as <span className="font-semibold text-slate-900">admin@panchamulbijuli.com</span></p>
+            <p>Logged in as <span className="font-semibold text-slate-900">{adminUser?.email ?? '—'}</span></p>
             <p className="mt-1 text-slate-400 text-xs">To change password, use Supabase dashboard → Authentication → Users</p>
           </div>
         </div>

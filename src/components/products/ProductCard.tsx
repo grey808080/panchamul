@@ -1,12 +1,15 @@
 'use client';
 
 import Image from 'next/image';
+import { useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { ShoppingCartIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useCartStore } from '@/lib/store/cartStore';
 import { formatPrice } from '@/lib/utils/formatPrice';
+import { productThumbUrl } from '@/lib/utils/imageUrl';
 import { Badge } from '@/components/ui/Badge';
+import toast from 'react-hot-toast';
 import type { Tables } from '@/types/database';
 type Product = Tables<'products'>;
 
@@ -18,6 +21,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const locale = useLocale();
   const t = useTranslations('products');
   const addItem = useCartStore((s) => s.addItem);
+  const [added, setAdded] = useState(false);
 
   const name = locale === 'np' && product.name_np ? product.name_np : product.name_en;
   const hasDiscount = product.compare_price && product.compare_price > product.price;
@@ -25,27 +29,28 @@ export default function ProductCard({ product }: ProductCardProps) {
     ? Math.round(((product.compare_price! - product.price) / product.compare_price!) * 100)
     : 0;
   const stockQty = product.stock_qty ?? 0;
-
-  const stockStatus = stockQty <= 0
-    ? 'out'
-    : stockQty <= 5
-    ? 'low'
-    : 'in';
+  const stockStatus = stockQty <= 0 ? 'out' : stockQty <= 5 ? 'low' : 'in';
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (stockQty <= 0) return;
+    if (stockQty <= 0 || added) return;
+
     addItem({
       id: product.id,
       name_en: product.name_en,
       name_np: product.name_np,
       slug: product.slug,
       price: product.price,
-      image: product.images?.[0] || '/placeholder-product.png',
+      image: productThumbUrl(product.images?.[0]),
       quantity: 1,
       stock_qty: stockQty,
     });
+
+    // Brief "added" state on the button, then toast
+    setAdded(true);
+    toast.success(`${product.name_en} added to cart`, { duration: 2000 });
+    setTimeout(() => setAdded(false), 1500);
   };
 
   return (
@@ -56,12 +61,22 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Image */}
       <div className="relative aspect-square overflow-hidden bg-slate-100">
         <Image
-          src={product.images?.[0] || '/placeholder-product.png'}
+          src={productThumbUrl(product.images?.[0])}
           alt={name}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-110"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          quality={75}
         />
+
+        {/* Out of stock overlay */}
+        {stockStatus === 'out' && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
+            <span className="rounded-full bg-slate-800/80 px-3 py-1 text-xs font-semibold text-white">
+              {t('outOfStock')}
+            </span>
+          </div>
+        )}
 
         {/* Discount Badge */}
         {hasDiscount && (
@@ -71,20 +86,28 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Featured Badge */}
-        {product.is_featured && (
-          <div className="absolute top-3 right-3 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-3 py-1 text-xs font-bold text-slate-900 shadow-lg">
+        {product.is_featured && !hasDiscount && (
+          <div className="absolute top-3 left-3 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-3 py-1 text-xs font-bold text-slate-900 shadow-lg">
             ⭐ {t('featured')}
           </div>
         )}
 
-        {/* Quick Add to Cart — always visible on mobile, hover on desktop */}
+        {/* Quick Add to Cart */}
         <button
           onClick={handleAddToCart}
           disabled={stockQty <= 0}
-          className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-primary shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0"
+          className={`absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 disabled:cursor-not-allowed sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 ${
+            added
+              ? 'bg-green-500 text-white opacity-100 translate-y-0'
+              : 'bg-white/90 text-primary hover:bg-primary hover:text-white disabled:opacity-50'
+          }`}
           aria-label={t('addToCart')}
         >
-          <ShoppingCartIcon className="h-4 w-4" />
+          {added ? (
+            <CheckIcon className="h-4 w-4" />
+          ) : (
+            <ShoppingCartIcon className="h-4 w-4" />
+          )}
         </button>
       </div>
 
@@ -109,10 +132,15 @@ export default function ProductCard({ product }: ProductCardProps) {
               </span>
             )}
           </div>
-          <Badge variant={stockStatus === 'in' ? 'success' : stockStatus === 'low' ? 'warning' : 'danger'}
-            className="text-[9px] sm:text-xs px-1.5 py-0.5">
-            {stockStatus === 'in' ? t('inStock') : stockStatus === 'low' ? t('lowStock') : t('outOfStock')}
-          </Badge>
+          {/* Only show badge for non-default states */}
+          {stockStatus !== 'in' && (
+            <Badge
+              variant={stockStatus === 'low' ? 'warning' : 'danger'}
+              className="text-[9px] sm:text-xs px-1.5 py-0.5"
+            >
+              {stockStatus === 'low' ? t('lowStock') : t('outOfStock')}
+            </Badge>
+          )}
         </div>
       </div>
     </Link>
