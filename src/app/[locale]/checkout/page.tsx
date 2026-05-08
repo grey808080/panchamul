@@ -91,10 +91,10 @@ export default function CheckoutPage() {
 
   const total = getTotal();
   const paymentMethods = [
-    { id: 'cod', label: t('cod'), icon: '💵' },
-    { id: 'esewa', label: 'eSewa', icon: '📱' },
-    { id: 'khalti', label: 'Khalti', icon: '💜' },
-    { id: 'bank_transfer', label: t('bankTransfer'), icon: '🏦' },
+    { id: 'cod', label: t('cod'), icon: '💵', available: true },
+    { id: 'esewa', label: 'eSewa', icon: '📱', available: false },
+    { id: 'khalti', label: 'Khalti', icon: '💜', available: false },
+    { id: 'bank_transfer', label: t('bankTransfer'), icon: '🏦', available: true },
   ];
 
   if (authChecking) return (
@@ -164,13 +164,23 @@ export default function CheckoutPage() {
                     <button
                       key={pm.id}
                       type="button"
-                      onClick={() => setPaymentMethod(pm.id)}
-                      className={`flex items-center gap-2 rounded-xl border-2 p-3 text-left transition-all ${
-                        paymentMethod === pm.id ? 'border-primary bg-primary/5' : 'border-slate-200'
+                      onClick={() => pm.available && setPaymentMethod(pm.id)}
+                      disabled={!pm.available}
+                      className={`relative flex items-center gap-2 rounded-xl border-2 p-3 text-left transition-all ${
+                        !pm.available
+                          ? 'cursor-not-allowed border-slate-100 opacity-60'
+                          : paymentMethod === pm.id
+                          ? 'border-primary bg-primary/5'
+                          : 'border-slate-200 hover:border-slate-300'
                       }`}
                     >
                       <span className="text-xl">{pm.icon}</span>
                       <span className="text-xs font-medium text-slate-700">{pm.label}</span>
+                      {!pm.available && (
+                        <span className="absolute right-2 top-2 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                          Soon
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>

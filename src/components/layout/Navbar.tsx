@@ -3,7 +3,7 @@
 import { ShoppingCartIcon, Bars3Icon, XMarkIcon, BoltIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import { Link, usePathname } from '@/i18n/navigation';
+import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { useCartStore } from '@/lib/store/cartStore';
 import { useAuth } from '@/lib/hooks/useAuth';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -27,6 +27,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const itemCount = useCartStore((s) => s.getItemCount());
   const { user, loading, signOut } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -153,7 +154,7 @@ export default function Navbar() {
       <AuthModal
         open={authOpen}
         onClose={() => setAuthOpen(false)}
-        onSuccess={() => window.location.reload()}
+        onSuccess={() => router.refresh()}
       />
     </>
   );

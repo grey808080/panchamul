@@ -40,7 +40,7 @@ export default async function HomePage({
       <HeroBanner />
       <TrustBadges />
       <FeaturedProductsClient products={featured || []} />
-      <CategoryGrid />
+      <CategoryGrid categories={categories || []} />
     </div>
   );
 }
