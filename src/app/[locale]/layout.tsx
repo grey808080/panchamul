@@ -52,20 +52,22 @@ export default async function LocaleLayout({
         </main>
         <Footer />
         <WhatsAppBubble />
-        <Toaster 
+        <Toaster
           position="bottom-center"
           toastOptions={{
             style: {
-              background: '#333',
-              color: '#fff',
-              borderRadius: '12px',
+              background: '#1E1E1E',
+              color: '#F5F5F5',
+              borderRadius: '4px',
+              border: '1px solid #2A2A2A',
+              fontSize: '13px',
             },
             success: {
-              duration: 3000,
-              iconTheme: {
-                primary: '#10B981',
-                secondary: '#fff',
-              },
+              duration: 2500,
+              iconTheme: { primary: '#FF6B00', secondary: '#1E1E1E' },
+            },
+            error: {
+              iconTheme: { primary: '#EF4444', secondary: '#1E1E1E' },
             },
           }}
         />

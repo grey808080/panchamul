@@ -35,8 +35,11 @@ export default function GalleryClient({ items }: GalleryClientProps) {
           <button
             key={type || 'all'}
             onClick={() => setFilter(type)}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${filter === type ? 'bg-primary text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+            className={`rounded px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
+              filter === type
+                ? 'bg-slate-900 text-white'
+                : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+            }`}
           >
             {type ? t(`type_${type}`) : t('all')}
           </button>

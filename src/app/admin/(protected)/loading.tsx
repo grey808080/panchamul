@@ -1,13 +1,21 @@
-import { AdminStatsSkeleton, AdminTableSkeleton } from '@/components/ui/Skeleton';
-import { Skeleton } from '@/components/ui/Skeleton';
+import { AdminStatsSkeleton, AdminTableSkeleton, Skeleton } from '@/components/ui/Skeleton';
 
 export default function AdminLoading() {
   return (
     <div>
-      <Skeleton className="mb-8 h-8 w-36" />
+      {/* Page title */}
+      <div className="flex justify-between items-center mb-6">
+        <Skeleton className="h-7 w-32" />
+      </div>
+
+      {/* Stat cards */}
       <AdminStatsSkeleton />
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
-        <Skeleton className="mb-4 h-6 w-32" />
+
+      {/* Recent orders table */}
+      <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+        <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
+          <Skeleton className="h-4 w-28" />
+        </div>
         <AdminTableSkeleton rows={5} cols={4} />
       </div>
     </div>

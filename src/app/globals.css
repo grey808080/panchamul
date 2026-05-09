@@ -1,3 +1,6 @@
+/* Rajdhani — industrial heading font (Latin) */
+/* Noto Sans Devanagari — Nepali script support */
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -5,83 +8,124 @@
 
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
     scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    /* Light base — content areas are white/near-white */
+    @apply bg-white text-slate-900 antialiased;
   }
 
+  /* Default border color */
   * {
-    @apply border-slate-200;
+    border-color: #E5E7EB;
   }
+
+  /* Headings use Rajdhani for Latin, Noto Sans Devanagari for Nepali */
+  h1, h2, h3, h4, h5 {
+    font-family: 'Rajdhani', 'Noto Sans Devanagari', 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  /* Nepali text — ensure Devanagari renders correctly */
+  :lang(ne), [lang="np"] {
+    font-family: 'Noto Sans Devanagari', 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+  }
+
+  /* Ensure readable contrast on dark surfaces */
+  .bg-surface-bg, .bg-surface-card, .bg-surface-elevated {
+    color: #F5F5F5;
+  }
+  .bg-surface-bg p, .bg-surface-card p, .bg-surface-elevated p {
+    color: #D1D5DB; /* slate-300 — passes WCAG AA on dark */
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #F3F4F6; }
+  ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #FF6B00; }
 }
 
 @layer components {
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:bg-primary-dark hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
-  }
 
-  .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:bg-secondary-dark hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed;
+  /* ── Buttons ── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white shadow-orange transition-all duration-200 hover:bg-primary-light hover:shadow-orange-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-primary px-6 py-3 text-sm font-semibold text-primary transition-all duration-200 hover:bg-primary hover:text-white hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-primary px-6 py-3 text-sm font-semibold text-primary transition-all duration-200 hover:bg-primary hover:text-white active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900;
   }
 
+  /* ── Cards — light surface ── */
   .card {
-    @apply rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition-all duration-300;
+    @apply rounded-lg bg-white border border-slate-200 transition-all duration-200;
   }
 
   .card-hover {
-    @apply card hover:shadow-xl hover:-translate-y-1 hover:ring-primary/20;
+    @apply card hover:border-primary/50 hover:shadow-lg hover:-translate-y-0.5;
   }
 
+  /* ── Dark surface cards (hero, navbar, footer areas) ── */
+  .card-dark {
+    @apply rounded-lg bg-surface-card border border-surface-border transition-all duration-200;
+  }
+
+  /* ── Section headings ── */
   .section-heading {
     @apply text-3xl font-bold tracking-tight text-slate-900 md:text-4xl;
+    font-family: 'Rajdhani', 'Noto Sans Devanagari', sans-serif;
   }
 
   .section-subheading {
-    @apply mt-2 text-base text-slate-500 md:text-lg;
+    @apply mt-2 text-sm text-slate-500 md:text-base;
   }
 
-  .badge-success {
-    @apply inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-600/20;
-  }
-
-  .badge-warning {
-    @apply inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-600/20;
-  }
-
-  .badge-danger {
-    @apply inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-600/20;
-  }
-
+  /* ── Form elements — light ── */
   .input-field {
-    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20;
+    @apply w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20;
   }
 
   .label {
-    @apply block text-sm font-medium text-slate-700 mb-1.5;
+    @apply block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5;
   }
 
+  /* ── Status badges ── */
+  .badge-success {
+    @apply inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-700 ring-1 ring-amber-200;
+  }
+
+  .badge-danger {
+    @apply inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-red-50 text-red-700 ring-1 ring-red-200;
+  }
+
+  /* ── Gradient text ── */
   .gradient-text {
     @apply bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent;
   }
 }
 
 @layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .font-heading {
+    font-family: 'Rajdhani', 'Noto Sans Devanagari', 'Inter', system-ui, sans-serif;
   }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+
+  .font-nepali {
+    font-family: 'Noto Sans Devanagari', 'Inter', system-ui, sans-serif;
   }
 }

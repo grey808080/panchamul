@@ -24,7 +24,6 @@ export default function LanguageSwitcher() {
       className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:border-primary/30 hover:text-primary hover:shadow-md disabled:opacity-50"
       title={locale === 'en' ? 'Switch to Nepali' : 'Switch to English'}
     >
-      <span className="text-sm">{locale === 'en' ? '🇳🇵' : '🇬🇧'}</span>
       <span>{locale === 'en' ? 'NP' : 'EN'}</span>
     </button>
   );

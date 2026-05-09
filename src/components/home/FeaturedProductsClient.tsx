@@ -16,12 +16,12 @@ export default function FeaturedProductsClient({ products }: FeaturedProductsCli
 
   if (products.length === 0) {
     return (
-      <section className="py-16 bg-slate-50">
+      <section className="py-14 bg-slate-50 border-b border-slate-200">
         <div className="mx-auto max-w-7xl px-4 text-center">
-          <h2 className="text-3xl font-bold text-slate-900">{t('featuredTitle')}</h2>
-          <p className="mt-4 text-slate-500">{t('featuredEmpty')}</p>
+          <h2 className="font-heading text-3xl font-bold text-slate-900">{t('featuredTitle')}</h2>
+          <p className="mt-3 text-slate-500">{t('featuredEmpty')}</p>
           <Link href="/products">
-            <Button className="mt-6">{t('viewAll')}</Button>
+            <Button className="mt-5">{t('viewAll')}</Button>
           </Link>
         </div>
       </section>
@@ -29,27 +29,27 @@ export default function FeaturedProductsClient({ products }: FeaturedProductsCli
   }
 
   return (
-    <section className="py-16 bg-slate-50">
+    <section className="py-14 bg-slate-50 border-b border-slate-200">
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-slate-900">{t('featuredTitle')}</h2>
-            <p className="mt-1 text-slate-500">{t('featuredSubtitle')}</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-1">Featured</p>
+            <h2 className="font-heading text-3xl font-bold text-slate-900">{t('featuredTitle')}</h2>
           </div>
           <Link href="/products" className="hidden sm:block">
-            <Button variant="outline">{t('viewAll')}</Button>
+            <Button variant="outline" size="sm">{t('viewAll')}</Button>
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
 
-        <div className="mt-8 text-center sm:hidden">
+        <div className="mt-6 text-center sm:hidden">
           <Link href="/products">
-            <Button variant="outline">{t('viewAll')}</Button>
+            <Button variant="outline" size="sm">{t('viewAll')}</Button>
           </Link>
         </div>
       </div>

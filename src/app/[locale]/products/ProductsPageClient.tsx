@@ -151,32 +151,43 @@ export default function ProductsPageClient({
     : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      {/* Page Header */}
-      <div className="bg-gradient-to-r from-primary to-primary-dark py-10 px-4">
-        <div className="mx-auto max-w-7xl">
-          <h1 className="text-3xl font-bold text-white md:text-4xl">{t('title')}</h1>
-          <p className="mt-1 text-blue-200/80 text-sm">{t('subtitle')}</p>
+    <div className="min-h-screen bg-white">
+      {/* Page Header — dark industrial */}
+      <div className="relative overflow-hidden bg-surface-bg">
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.05]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,107,0,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,107,0,1) 1px, transparent 1px)`,
+            backgroundSize: '48px 48px',
+          }}
+        />
+        <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-2">Catalogue</p>
+            <h1 className="font-heading text-3xl font-bold text-white md:text-4xl">{t('title')}</h1>
+            <p className="mt-1 text-slate-400 text-sm">{t('subtitle')}</p>
 
-          {/* Search bar */}
-          <div className="mt-5 max-w-xl">
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="search"
-                value={localSearch}
-                onChange={(e) => handleSearchInput(e.target.value)}
-                onBlur={handleSearchCommit}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearchCommit()}
-                placeholder={t('searchPlaceholder')}
-                className="w-full rounded-xl border-0 bg-white py-3 pl-12 pr-4 text-sm text-slate-800 placeholder:text-slate-400 shadow-lg focus:outline-none focus:ring-2 focus:ring-white/40"
-              />
+            {/* Search bar */}
+            <div className="mt-5 max-w-xl">
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  value={localSearch}
+                  onChange={(e) => handleSearchInput(e.target.value)}
+                  onBlur={handleSearchCommit}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearchCommit()}
+                  placeholder={t('searchPlaceholder')}
+                  className="w-full rounded-lg border border-surface-border bg-surface-elevated py-2.5 pl-10 pr-4 text-sm text-ink-primary placeholder-ink-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/40"
+                />
+              </div>
             </div>
           </div>
         </div>
+        <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-6">
+      <div className="mx-auto max-w-7xl px-4 py-6 bg-white">
         {/* Category Tabs */}
         <div className="mb-5">
           <CategoryTabs

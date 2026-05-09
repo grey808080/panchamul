@@ -1,6 +1,6 @@
 import React from 'react';
 
-type BadgeVariant = 'success' | 'warning' | 'danger' | 'info' | 'default';
+type BadgeVariant = 'success' | 'warning' | 'danger' | 'info' | 'default' | 'orange';
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
@@ -8,18 +8,19 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 export function Badge({ variant = 'default', children, className = '', ...props }: BadgeProps) {
-  const baseStyles = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset';
-  
+  const base = 'inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider';
+
   const variants: Record<BadgeVariant, string> = {
-    success: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-    warning: 'bg-amber-50 text-amber-700 ring-amber-600/20',
-    danger: 'bg-red-50 text-red-700 ring-red-600/20',
-    info: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-    default: 'bg-slate-50 text-slate-700 ring-slate-500/20',
+    success: 'bg-emerald-900/40 text-emerald-400 ring-1 ring-emerald-500/30',
+    warning: 'bg-amber-900/40 text-amber-400 ring-1 ring-amber-500/30',
+    danger:  'bg-red-900/40 text-red-400 ring-1 ring-red-500/30',
+    info:    'bg-blue-900/40 text-blue-400 ring-1 ring-blue-500/30',
+    orange:  'bg-primary/20 text-primary ring-1 ring-primary/40',
+    default: 'bg-surface-elevated text-ink-muted ring-1 ring-surface-border',
   };
 
   return (
-    <span className={`${baseStyles} ${variants[variant]} ${className}`} {...props}>
+    <span className={`${base} ${variants[variant]} ${className}`} {...props}>
       {children}
     </span>
   );

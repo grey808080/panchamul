@@ -57,8 +57,8 @@ export default async function AdminOrdersPage({
     .order('created_at', { ascending: false })
     .range(from, to);
 
-  if (status) query = query.eq('status', status);
-  if (payment) query = query.eq('payment_method', payment);
+  if (status) query = query.eq('status', status as 'received' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled');
+  if (payment) query = query.eq('payment_method', payment as 'cod' | 'esewa' | 'khalti' | 'bank_transfer');
 
   const { data: orders, count } = await query;
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
@@ -86,11 +86,6 @@ export default async function AdminOrdersPage({
         </h1>
 
         {/* Payment filter */}
-        <select
-          defaultValue={payment}
-          onChange={() => {}}
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30 hidden"
-        />
         <div className="flex items-center gap-2">
           <span className="text-sm text-slate-500 shrink-0">Payment:</span>
           <div className="flex gap-1 flex-wrap">
@@ -152,7 +147,6 @@ export default async function AdminOrdersPage({
                   <tr
                     key={order.id}
                     className="hover:bg-slate-50/70 cursor-pointer transition-colors group"
-                    onClick={() => {}}
                   >
                     <td className="px-5 py-4">
                       <Link href={`/admin/orders/${order.id}`} className="block">

@@ -34,9 +34,11 @@ const PAYMENT_LABELS: Record<string, string> = {
   khalti:        'Khalti',
 };
 
+type OrderStatus = 'received' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
+
 export default function OrderDetailClient({ order }: { order: Order }) {
   const router = useRouter();
-  const [status, setStatus] = useState(order.status ?? 'received');
+  const [status, setStatus] = useState<OrderStatus>((order.status ?? 'received') as OrderStatus);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -44,7 +46,6 @@ export default function OrderDetailClient({ order }: { order: Order }) {
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus === status) return;
 
-    // Require confirmation for cancellation
     if (newStatus === 'cancelled' && !confirmCancel) {
       setConfirmCancel(true);
       return;
@@ -54,7 +55,7 @@ export default function OrderDetailClient({ order }: { order: Order }) {
     setLoading(true);
     setError(null);
     const prev = status;
-    setStatus(newStatus as Order['status']);
+    setStatus(newStatus as OrderStatus);
 
     const res = await fetch(`/api/admin/orders/${order.id}/status`, {
       method: 'PATCH',
@@ -65,7 +66,7 @@ export default function OrderDetailClient({ order }: { order: Order }) {
     setLoading(false);
 
     if (!res.ok) {
-      setStatus(prev as Order['status']);
+      setStatus(prev);
       setError('Failed to update status. Please try again.');
       return;
     }
@@ -73,7 +74,7 @@ export default function OrderDetailClient({ order }: { order: Order }) {
     router.refresh();
   };
 
-  const items = (order.items ?? []) as OrderItem[];
+  const items = (order.items as unknown as OrderItem[]) ?? [];
   const subtotal = Number(order.subtotal ?? 0);
   const delivery = Number(order.delivery_charge ?? 0);
   const total    = Number(order.total ?? 0);

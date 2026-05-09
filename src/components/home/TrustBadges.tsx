@@ -7,26 +7,35 @@ export default function TrustBadges() {
   const t = useTranslations('home');
 
   const badges = [
-    { icon: BoltIcon, title: t('trust1Title'), desc: t('trust1Desc'), color: 'from-blue-500 to-primary' },
-    { icon: TruckIcon, title: t('trust2Title'), desc: t('trust2Desc'), color: 'from-green-500 to-emerald-600' },
-    { icon: ShieldCheckIcon, title: t('trust3Title'), desc: t('trust3Desc'), color: 'from-amber-500 to-secondary' },
-    { icon: UserGroupIcon, title: t('trust4Title'), desc: t('trust4Desc'), color: 'from-purple-500 to-violet-600' },
+    { icon: BoltIcon,        title: t('trust1Title'), desc: t('trust1Desc') },
+    { icon: TruckIcon,       title: t('trust2Title'), desc: t('trust2Desc') },
+    { icon: ShieldCheckIcon, title: t('trust3Title'), desc: t('trust3Desc') },
+    { icon: UserGroupIcon,   title: t('trust4Title'), desc: t('trust4Desc') },
   ];
 
   return (
-    <section className="py-16 bg-white">
+    <section className="bg-slate-50 border-y border-slate-200">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+        {/*
+          Mobile: 2-col grid with both x and y dividers
+          Desktop: 4-col single row with only x dividers
+        */}
+        <div className="grid grid-cols-2 md:grid-cols-4
+          divide-y divide-x divide-slate-200
+          md:divide-y-0
+        ">
           {badges.map((badge, i) => (
             <div
               key={i}
-              className="group flex flex-col items-center text-center rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              className="group flex items-center gap-3 px-4 py-4 sm:px-6 sm:py-5 transition-colors hover:bg-white"
             >
-              <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${badge.color} text-white shadow-lg mb-4 transition-transform group-hover:scale-110`}>
-                <badge.icon className="h-7 w-7" />
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded border border-slate-200 bg-white text-slate-600 transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-white">
+                <badge.icon className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <h3 className="text-sm font-bold text-slate-800 md:text-base">{badge.title}</h3>
-              <p className="mt-1 text-xs text-slate-500 md:text-sm">{badge.desc}</p>
+              <div className="min-w-0">
+                <p className="font-heading text-xs sm:text-sm font-bold text-slate-800 leading-tight">{badge.title}</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 leading-tight hidden sm:block">{badge.desc}</p>
+              </div>
             </div>
           ))}
         </div>

@@ -1,8 +1,6 @@
 import { createPublicClient } from '@/lib/supabase/server';
 import GalleryClient from './GalleryClient';
 import { getTranslations } from 'next-intl/server';
-import type { Tables } from '@/types/database';
-type GalleryItem = Tables<'gallery'>;
 
 export const revalidate = 3600;
 
@@ -16,13 +14,35 @@ export default async function GalleryPage() {
     .order('display_order', { ascending: true });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <section className="bg-gradient-to-r from-primary to-primary-dark px-4 py-14">
-        <div className="mx-auto max-w-6xl text-center">
-          <h1 className="text-3xl font-bold text-white md:text-5xl">{t('title')}</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-blue-100/90 md:text-lg">{t('subtitle')}</p>
+    <div className="min-h-screen bg-white">
+
+      {/* ── Dark hero header ── */}
+      <div className="relative overflow-hidden bg-surface-bg">
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.05]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,107,0,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,107,0,1) 1px, transparent 1px)`,
+            backgroundSize: '48px 48px',
+          }}
+        />
+        <div
+          className="absolute top-0 right-0 h-64 w-64 pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(255,107,0,0.1) 0%, transparent 70%)' }}
+        />
+        <div className="relative mx-auto max-w-6xl px-4 py-14 sm:py-16">
+          <div className="max-w-2xl">
+            <div className="mb-4 inline-flex items-center gap-2 border border-primary/40 bg-primary/10 px-3 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Photos</span>
+            </div>
+            <h1 className="font-heading text-4xl font-bold text-white sm:text-5xl">{t('title')}</h1>
+            <p className="mt-3 text-slate-300 leading-relaxed">{t('subtitle')}</p>
+          </div>
         </div>
-      </section>
+        <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+      </div>
+
+      {/* ── Gallery content ── */}
       <section className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
         <GalleryClient items={items || []} />
       </section>

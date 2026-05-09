@@ -8,7 +8,6 @@ import { ShoppingCartIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useCartStore } from '@/lib/store/cartStore';
 import { formatPrice } from '@/lib/utils/formatPrice';
 import { productThumbUrl } from '@/lib/utils/imageUrl';
-import { Badge } from '@/components/ui/Badge';
 import toast from 'react-hot-toast';
 import type { Tables } from '@/types/database';
 type Product = Tables<'products'>;
@@ -47,7 +46,6 @@ export default function ProductCard({ product }: ProductCardProps) {
       stock_qty: stockQty,
     });
 
-    // Brief "added" state on the button, then toast
     setAdded(true);
     toast.success(`${product.name_en} added to cart`, { duration: 2000 });
     setTimeout(() => setAdded(false), 1500);
@@ -56,7 +54,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1"
+      className="group relative flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition-all duration-200 hover:border-primary hover:shadow-lg"
     >
       {/* Image */}
       <div className="relative aspect-square overflow-hidden bg-slate-100">
@@ -64,85 +62,85 @@ export default function ProductCard({ product }: ProductCardProps) {
           src={productThumbUrl(product.images?.[0])}
           alt={name}
           fill
-          className="object-cover transition-transform duration-500 group-hover:scale-110"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           quality={75}
         />
 
         {/* Out of stock overlay */}
         {stockStatus === 'out' && (
-          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
-            <span className="rounded-full bg-slate-800/80 px-3 py-1 text-xs font-semibold text-white">
+          <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+            <span className="rounded border border-slate-300 bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-500">
               {t('outOfStock')}
             </span>
           </div>
         )}
 
-        {/* Discount Badge */}
+        {/* Discount badge */}
         {hasDiscount && (
-          <div className="absolute top-3 left-3 rounded-full bg-gradient-to-r from-red-500 to-rose-500 px-3 py-1 text-xs font-bold text-white shadow-lg">
+          <div className="absolute top-2 left-2 bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
             -{discountPercent}%
           </div>
         )}
 
-        {/* Featured Badge */}
+        {/* Featured badge */}
         {product.is_featured && !hasDiscount && (
-          <div className="absolute top-3 left-3 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-3 py-1 text-xs font-bold text-slate-900 shadow-lg">
-            ⭐ {t('featured')}
+          <div className="absolute top-2 left-2 border border-primary/50 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+            {t('featured')}
           </div>
         )}
 
-        {/* Quick Add to Cart */}
+        {/* Low stock */}
+        {stockStatus === 'low' && (
+          <div className="absolute top-2 right-2 bg-amber-50 border border-amber-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+            {t('lowStock')}
+          </div>
+        )}
+
+        {/* Quick add button */}
         <button
           onClick={handleAddToCart}
           disabled={stockQty <= 0}
-          className={`absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 disabled:cursor-not-allowed sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 ${
+          className={`absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded border transition-all duration-200 disabled:cursor-not-allowed sm:opacity-0 sm:translate-y-1 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 ${
             added
-              ? 'bg-green-500 text-white opacity-100 translate-y-0'
-              : 'bg-white/90 text-primary hover:bg-primary hover:text-white disabled:opacity-50'
+              ? 'border-emerald-500 bg-emerald-500 text-white opacity-100 translate-y-0'
+              : 'border-primary bg-primary text-white hover:bg-primary-light disabled:opacity-40'
           }`}
           aria-label={t('addToCart')}
         >
-          {added ? (
-            <CheckIcon className="h-4 w-4" />
-          ) : (
-            <ShoppingCartIcon className="h-4 w-4" />
-          )}
+          {added
+            ? <CheckIcon className="h-4 w-4" />
+            : <ShoppingCartIcon className="h-4 w-4" />
+          }
         </button>
       </div>
 
       {/* Info */}
-      <div className="flex flex-1 flex-col gap-1.5 p-3 sm:p-4">
-        <h3 className="text-xs sm:text-sm font-medium text-slate-800 line-clamp-2 group-hover:text-primary transition-colors">
+      <div className="flex flex-1 flex-col gap-1 p-3">
+        {product.brand && (
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{product.brand}</p>
+        )}
+
+        <h3 className={`text-xs sm:text-sm font-medium text-slate-700 line-clamp-2 group-hover:text-slate-900 transition-colors leading-snug ${locale === 'np' && product.name_np ? 'font-nepali' : ''}`}>
           {name}
         </h3>
 
-        {product.brand && (
-          <p className="text-[10px] sm:text-xs text-slate-400">{product.brand}</p>
-        )}
-
-        <div className="mt-auto flex items-end justify-between gap-1">
-          <div className="flex flex-col">
-            <span className="text-sm sm:text-lg font-bold text-slate-900">
+        <div className="mt-auto pt-2 flex items-end justify-between gap-1">
+          <div>
+            <span className="font-heading text-base sm:text-lg font-bold text-slate-900">
               {formatPrice(product.price)}
             </span>
             {hasDiscount && (
-              <span className="text-[10px] sm:text-xs text-slate-400 line-through">
+              <span className="block text-[10px] text-slate-400 line-through">
                 {formatPrice(product.compare_price!)}
               </span>
             )}
           </div>
-          {/* Only show badge for non-default states */}
-          {stockStatus !== 'in' && (
-            <Badge
-              variant={stockStatus === 'low' ? 'warning' : 'danger'}
-              className="text-[9px] sm:text-xs px-1.5 py-0.5"
-            >
-              {stockStatus === 'low' ? t('lowStock') : t('outOfStock')}
-            </Badge>
-          )}
         </div>
       </div>
+
+      {/* Orange bottom border on hover */}
+      <div className="h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full" />
     </Link>
   );
 }

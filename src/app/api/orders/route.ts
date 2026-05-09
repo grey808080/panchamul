@@ -68,12 +68,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
     }
 
-    // Atomically decrement stock — only decrements if sufficient stock exists.
-    // Uses a single UPDATE per product to avoid the read-then-write race condition
-    // that would allow overselling when concurrent orders arrive.
+    // Atomically decrement stock. decrement_stock is a custom Postgres function
+    // not in the generated types, so we cast to any for the rpc call only.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = supabase as any;
     await Promise.all(
       normalizedItems.map((item: { product_id: string; quantity: number }) =>
-        supabase.rpc('decrement_stock', {
+        db.rpc('decrement_stock', {
           p_product_id: item.product_id,
           p_quantity: item.quantity,
         })

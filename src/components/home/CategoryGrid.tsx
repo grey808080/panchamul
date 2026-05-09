@@ -1,21 +1,8 @@
 'use client';
+
 import { Link } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import type { Tables } from '@/types';
-
-// Gradient fallback keyed by slug — add new slugs here as categories grow
-const GRADIENT_MAP: Record<string, string> = {
-  'wires-cables': 'from-blue-500 to-blue-600',
-  'switches-sockets': 'from-emerald-500 to-green-600',
-  'lights-fittings': 'from-amber-400 to-yellow-500',
-  'mcbs-dbs': 'from-red-500 to-rose-600',
-  'fans': 'from-cyan-500 to-teal-600',
-  'solar': 'from-orange-400 to-amber-500',
-  'tools-equipment': 'from-slate-600 to-slate-700',
-  'house-wiring': 'from-purple-500 to-violet-600',
-};
-
-const DEFAULT_GRADIENT = 'from-primary to-primary-light';
 
 type Category = Tables<'categories'>;
 
@@ -28,28 +15,44 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
   const t = useTranslations('home');
 
   return (
-    <section className="py-16 bg-gradient-to-b from-white to-slate-50">
+    <section className="py-14 bg-white">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-slate-900">{t('categoriesTitle')}</h2>
-          <p className="mt-2 text-slate-500">{t('categoriesSubtitle')}</p>
+
+        {/* Section header */}
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-1">Categories</p>
+            <h2 className="font-heading text-3xl font-bold text-slate-900">{t('categoriesTitle')}</h2>
+          </div>
+          <Link
+            href="/products"
+            className="hidden sm:flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-primary transition-colors"
+          >
+            View All →
+          </Link>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:gap-6">
+
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
           {categories.map((cat) => {
-            const gradient = GRADIENT_MAP[cat.slug] ?? DEFAULT_GRADIENT;
             const label = locale === 'np' ? cat.name_np : cat.name_en;
             return (
               <Link
                 key={cat.slug}
                 href={`/products?category=${cat.slug}`}
-                className="group flex flex-col items-center rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/60 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:ring-primary/30 sm:p-6"
+                className="group flex flex-col items-center gap-3 rounded-lg border border-slate-200 bg-white p-5 transition-all duration-200 hover:border-primary hover:shadow-md"
               >
-                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-2xl shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 sm:h-16 sm:w-16 sm:text-3xl`}>
-                  {cat.icon ?? '📦'}
+                {/* Icon */}
+                <div className="flex h-12 w-12 items-center justify-center rounded border border-slate-200 bg-slate-50 text-2xl transition-all duration-200 group-hover:border-primary/40 group-hover:bg-primary/5">
+                  {cat.icon ?? '⚡'}
                 </div>
-                <h3 className="mt-3 text-center text-xs font-semibold text-slate-800 transition-colors group-hover:text-primary sm:mt-4 sm:text-sm">
+
+                {/* Label */}
+                <span className={`text-sm font-semibold text-center text-slate-600 transition-colors group-hover:text-slate-900 leading-tight ${locale === 'np' ? 'font-nepali' : 'font-heading'}`}>
                   {label}
-                </h3>
+                </span>
+
+                {/* Orange bottom indicator */}
+                <div className="h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-8" />
               </Link>
             );
           })}
