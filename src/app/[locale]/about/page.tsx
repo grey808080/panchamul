@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: 'Learn about Panchamul Bijuli, serving Kohalpur and Banke district with quality electrical products and services since 2010.',
 };
 
+// Static content — never changes without a redeploy
+export const revalidate = false;
+
 export default async function AboutPage() {
   const t = await getTranslations('about');
   const mapUrl =

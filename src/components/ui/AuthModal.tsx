@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPublicClient } from '@/lib/supabase/client';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Button } from './Button';
 import toast from 'react-hot-toast';
+import { useLockBodyScroll } from '@/lib/hooks/useLockBodyScroll';
 
 interface AuthModalProps {
   open: boolean;
@@ -20,6 +21,8 @@ export default function AuthModal({ open, onClose, onSuccess, message }: AuthMod
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const supabase = createPublicClient();
+
+  useLockBodyScroll(open);
 
   if (!open) return null;
 

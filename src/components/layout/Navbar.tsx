@@ -25,9 +25,18 @@ export default function Navbar() {
   const [cartOpen, setCartOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const itemCount = useCartStore((s) => s.getItemCount());
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
+
+  // Delay reading cart count until after hydration.
+  // Zustand persist reads from localStorage which doesn't exist on the server,
+  // so SSR always produces itemCount=0. Without this guard the badge causes a
+  // hydration mismatch when the cart has items from a previous session.
+  useEffect(() => { setMounted(true); }, []);
+
+  const displayCount = mounted ? itemCount : 0;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -95,9 +104,9 @@ export default function Navbar() {
                 className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors"
               >
                 <ShoppingCartIcon className="h-5 w-5" />
-                {itemCount > 0 && (
+                {displayCount > 0 && (
                   <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-white">
-                    {itemCount > 99 ? '99+' : itemCount}
+                    {displayCount > 99 ? '99+' : displayCount}
                   </span>
                 )}
               </button>

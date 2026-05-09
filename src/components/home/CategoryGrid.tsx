@@ -50,9 +50,6 @@ export default function CategoryGrid({ categories }: CategoryGridProps) {
                 <h3 className="mt-3 text-center text-xs font-semibold text-slate-800 transition-colors group-hover:text-primary sm:mt-4 sm:text-sm">
                   {label}
                 </h3>
-                <p className="mt-1 text-[11px] text-slate-400 sm:text-xs">
-                  {cat.name_en}
-                </p>
               </Link>
             );
           })}

@@ -5,9 +5,9 @@ import { createPublicClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 import type { User } from '@supabase/supabase-js';
+import { saveSettings, loadSettings } from './actions';
 import {
   PhoneIcon,
-  EnvelopeIcon,
   MapPinIcon,
   MegaphoneIcon,
   ClockIcon,
@@ -58,39 +58,19 @@ export default function AdminSettingsPage() {
   const supabase = createPublicClient();
 
   useEffect(() => {
-    fetchSettings();
+    loadSettings().then((data) => { setSettings(data); setLoading(false); });
     supabase.auth.getUser().then(({ data }) => setAdminUser(data.user));
   }, []);
-
-  const fetchSettings = async () => {
-    const { data } = await supabase.from('site_settings').select('*');
-    if (data) {
-      const formatted = data.reduce(
-        (acc, curr) => ({ ...acc, [curr.key]: curr.value || '' }),
-        {} as Record<string, string>
-      );
-      setSettings(formatted);
-    }
-    setLoading(false);
-  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-
-    const upserts = Object.entries(settings).map(([key, value]) =>
-      supabase.from('site_settings').upsert({ key, value, updated_at: new Date().toISOString() })
-    );
-
-    const results = await Promise.all(upserts);
-    const hasError = results.some(r => r.error);
-
-    if (hasError) {
-      toast.error('Failed to save some settings');
+    const result = await saveSettings(settings);
+    if (result.error) {
+      toast.error(result.error);
     } else {
       toast.success('Settings saved successfully!');
     }
-
     setSaving(false);
   };
 

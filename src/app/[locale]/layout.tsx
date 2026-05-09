@@ -8,6 +8,11 @@ import WhatsAppBubble from '@/components/layout/WhatsAppBubble';
 import { Toaster } from 'react-hot-toast';
 import { setRequestLocale } from 'next-intl/server';
 
+// Supabase hostname for preconnect — strips protocol and trailing slash
+const supabaseHost = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
+  .replace(/^https?:\/\//, '')
+  .replace(/\/$/, '');
+
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -33,6 +38,13 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages} locale={locale}>
+      {/* Preconnect to Supabase so the first image/API request doesn't pay DNS + TLS cost */}
+      {supabaseHost && (
+        <>
+          <link rel="preconnect" href={`https://${supabaseHost}`} />
+          <link rel="dns-prefetch" href={`https://${supabaseHost}`} />
+        </>
+      )}
       <div className="flex min-h-screen flex-col">
         <Navbar />
         <main className="flex-1">

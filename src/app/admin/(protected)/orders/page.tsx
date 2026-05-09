@@ -1,86 +1,223 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils/formatPrice';
-import { EyeIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const PAGE_SIZE = 20;
+
+const STATUS_TABS = [
+  { key: '',                label: 'All',          color: 'slate' },
+  { key: 'received',        label: 'Received',     color: 'blue'  },
+  { key: 'processing',      label: 'Processing',   color: 'amber' },
+  { key: 'out_for_delivery',label: 'Out for Del.', color: 'purple'},
+  { key: 'delivered',       label: 'Delivered',    color: 'green' },
+  { key: 'cancelled',       label: 'Cancelled',    color: 'red'   },
+] as const;
+
+const STATUS_BADGE: Record<string, string> = {
+  received:         'bg-blue-100 text-blue-800',
+  processing:       'bg-amber-100 text-amber-800',
+  out_for_delivery: 'bg-purple-100 text-purple-800',
+  delivered:        'bg-green-100 text-green-800',
+  cancelled:        'bg-red-100 text-red-800',
+};
+
+const STATUS_ICON: Record<string, string> = {
+  received:         '📥',
+  processing:       '⚙️',
+  out_for_delivery: '🚚',
+  delivered:        '✅',
+  cancelled:        '❌',
+};
+
+const PAYMENT_LABELS: Record<string, string> = {
+  cod:           'Cash on Delivery',
+  bank_transfer: 'Bank Transfer',
+  esewa:         'eSewa',
+  khalti:        'Khalti',
+};
 
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; payment?: string }>;
 }) {
-  const { page: pageParam } = await searchParams;
-  const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1);
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
+  const { page: pageParam, status: statusParam, payment: paymentParam } = await searchParams;
+  const page    = Math.max(1, parseInt(pageParam ?? '1', 10) || 1);
+  const status  = statusParam ?? '';
+  const payment = paymentParam ?? '';
+  const from    = (page - 1) * PAGE_SIZE;
+  const to      = from + PAGE_SIZE - 1;
 
   const supabase = createAdminClient();
 
-  const { data: orders, count } = await supabase
+  let query = supabase
     .from('orders')
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to);
 
+  if (status) query = query.eq('status', status);
+  if (payment) query = query.eq('payment_method', payment);
+
+  const { data: orders, count } = await query;
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
+
+  // Build URL helper
+  function buildUrl(overrides: Record<string, string | number | null>) {
+    const sp = new URLSearchParams();
+    const merged = { status, payment, page: String(page), ...overrides };
+    if (merged.status)  sp.set('status',  String(merged.status));
+    if (merged.payment) sp.set('payment', String(merged.payment));
+    if (merged.page && merged.page !== '1') sp.set('page', String(merged.page));
+    const qs = sp.toString();
+    return `/admin/orders${qs ? `?${qs}` : ''}`;
+  }
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold text-slate-900">
           Orders
           {count != null && (
-            <span className="ml-2 text-base font-normal text-slate-400">({count} total)</span>
+            <span className="ml-2 text-base font-normal text-slate-400">({count})</span>
           )}
         </h1>
+
+        {/* Payment filter */}
+        <select
+          defaultValue={payment}
+          onChange={() => {}}
+          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30 hidden"
+        />
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-500 shrink-0">Payment:</span>
+          <div className="flex gap-1 flex-wrap">
+            {[{ key: '', label: 'All' }, ...Object.entries(PAYMENT_LABELS).map(([k, v]) => ({ key: k, label: v }))].map((pm) => (
+              <Link
+                key={pm.key}
+                href={buildUrl({ payment: pm.key || null, page: 1 })}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  payment === pm.key
+                    ? 'bg-primary text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {pm.label}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
 
+      {/* Status tabs */}
+      <div className="flex gap-1 overflow-x-auto pb-1 mb-4">
+        {STATUS_TABS.map((tab) => {
+          const isActive = status === tab.key;
+          return (
+            <Link
+              key={tab.key}
+              href={buildUrl({ status: tab.key || null, page: 1 })}
+              className={`shrink-0 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                isActive
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Table */}
       <div className="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-500">
+            <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wide">
               <tr>
-                <th className="px-6 py-4 font-medium">Order Number</th>
-                <th className="px-6 py-4 font-medium">Date</th>
-                <th className="px-6 py-4 font-medium">Customer</th>
-                <th className="px-6 py-4 font-medium">Total</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                <th className="px-5 py-3.5 font-medium">Order</th>
+                <th className="px-5 py-3.5 font-medium">Customer</th>
+                <th className="px-5 py-3.5 font-medium">Items</th>
+                <th className="px-5 py-3.5 font-medium">Total</th>
+                <th className="px-5 py-3.5 font-medium">Payment</th>
+                <th className="px-5 py-3.5 font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {orders?.map((order) => (
-                <tr key={order.id} className="hover:bg-slate-50/50">
-                  <td className="px-6 py-4 font-mono font-medium">{order.order_number}</td>
-                  <td className="px-6 py-4 text-slate-500">
-                    {order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-medium text-slate-900">{order.customer_name}</p>
-                    <p className="text-xs text-slate-500">{order.customer_phone}</p>
-                  </td>
-                  <td className="px-6 py-4 font-medium">{formatPrice(order.total ?? 0)}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                      order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                      order.status === 'out_for_delivery' ? 'bg-purple-100 text-purple-800' :
-                      order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                      'bg-slate-100 text-slate-800'
-                    }`}>
-                      {order.status?.replace('_', ' ') ?? ''}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Link href={`/admin/orders/${order.id}`} className="text-slate-400 hover:text-primary transition-colors inline-block p-2">
-                      <EyeIcon className="h-5 w-5" />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+              {orders?.map((order) => {
+                const itemCount = Array.isArray(order.items) ? (order.items as any[]).length : 0;
+                return (
+                  <tr
+                    key={order.id}
+                    className="hover:bg-slate-50/70 cursor-pointer transition-colors group"
+                    onClick={() => {}}
+                  >
+                    <td className="px-5 py-4">
+                      <Link href={`/admin/orders/${order.id}`} className="block">
+                        <p className="font-mono font-semibold text-primary group-hover:underline">
+                          {order.order_number}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {order.created_at
+                            ? new Date(order.created_at).toLocaleDateString('en-NP', {
+                                day: 'numeric', month: 'short', year: 'numeric',
+                              })
+                            : ''}
+                        </p>
+                      </Link>
+                    </td>
+                    <td className="px-5 py-4">
+                      <Link href={`/admin/orders/${order.id}`} className="block">
+                        <p className="font-medium text-slate-900">{order.customer_name}</p>
+                        <p className="text-xs text-slate-500">{order.customer_phone}</p>
+                        <p className="text-xs text-slate-400 truncate max-w-[140px]">{order.delivery_city}</p>
+                      </Link>
+                    </td>
+                    <td className="px-5 py-4">
+                      <Link href={`/admin/orders/${order.id}`} className="block">
+                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+                          {itemCount}
+                        </span>
+                      </Link>
+                    </td>
+                    <td className="px-5 py-4">
+                      <Link href={`/admin/orders/${order.id}`} className="block font-semibold text-slate-900">
+                        {formatPrice(order.total ?? 0)}
+                      </Link>
+                    </td>
+                    <td className="px-5 py-4">
+                      <Link href={`/admin/orders/${order.id}`} className="block">
+                        <span className="text-xs text-slate-600 capitalize">
+                          {PAYMENT_LABELS[order.payment_method ?? ''] ?? order.payment_method ?? '—'}
+                        </span>
+                      </Link>
+                    </td>
+                    <td className="px-5 py-4">
+                      <Link href={`/admin/orders/${order.id}`} className="block">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          STATUS_BADGE[order.status ?? ''] ?? 'bg-slate-100 text-slate-700'
+                        }`}>
+                          <span>{STATUS_ICON[order.status ?? ''] ?? '•'}</span>
+                          {order.status?.replace(/_/g, ' ') ?? '—'}
+                        </span>
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
               {!orders?.length && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">No orders found.</td>
+                  <td colSpan={6} className="px-6 py-16 text-center">
+                    <p className="text-3xl mb-2">📋</p>
+                    <p className="text-slate-400 font-medium">No orders found</p>
+                    {(status || payment) && (
+                      <Link href="/admin/orders" className="mt-2 inline-block text-sm text-primary hover:underline">
+                        Clear filters
+                      </Link>
+                    )}
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -89,29 +226,29 @@ export default async function AdminOrdersPage({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
+          <div className="flex items-center justify-between border-t border-slate-100 px-5 py-4">
             <p className="text-sm text-slate-500">
-              Page {page} of {totalPages}
+              Page {page} of {totalPages} · {count} orders
             </p>
             <div className="flex items-center gap-2">
               <Link
-                href={`/admin/orders?page=${page - 1}`}
+                href={buildUrl({ page: page - 1 })}
                 aria-disabled={page <= 1}
-                className={`flex h-8 w-8 items-center justify-center rounded-lg border text-slate-600 transition-colors ${
+                className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
                   page <= 1
                     ? 'pointer-events-none border-slate-100 text-slate-300'
-                    : 'border-slate-200 hover:bg-slate-50 hover:text-primary'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-primary'
                 }`}
               >
                 <ChevronLeftIcon className="h-4 w-4" />
               </Link>
               <Link
-                href={`/admin/orders?page=${page + 1}`}
+                href={buildUrl({ page: page + 1 })}
                 aria-disabled={page >= totalPages}
-                className={`flex h-8 w-8 items-center justify-center rounded-lg border text-slate-600 transition-colors ${
+                className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
                   page >= totalPages
                     ? 'pointer-events-none border-slate-100 text-slate-300'
-                    : 'border-slate-200 hover:bg-slate-50 hover:text-primary'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-primary'
                 }`}
               >
                 <ChevronRightIcon className="h-4 w-4" />

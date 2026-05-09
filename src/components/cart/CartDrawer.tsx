@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useCartStore } from '@/lib/store/cartStore';
 import { formatPrice } from '@/lib/utils/formatPrice';
 import { Link, useRouter } from '@/i18n/navigation';
+import { useLockBodyScroll } from '@/lib/hooks/useLockBodyScroll';
 import Image from 'next/image';
 
 interface CartDrawerProps {
@@ -18,6 +19,8 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
   const t = useTranslations('cart');
   const router = useRouter();
   const { items, removeItem, updateQuantity, getTotal } = useCartStore();
+
+  useLockBodyScroll(open);
 
   const handleCheckout = () => {
     onClose();
@@ -57,6 +60,11 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                       <div className="flex items-start justify-between">
                         <Dialog.Title className="text-lg font-bold text-slate-900">
                           {t('title')}
+                          {items.length > 0 && (
+                            <span className="ml-2 text-sm font-normal text-slate-400">
+                              ({items.length})
+                            </span>
+                          )}
                         </Dialog.Title>
                         <div className="ml-3 flex h-7 items-center">
                           <button
