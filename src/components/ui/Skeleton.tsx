@@ -33,7 +33,7 @@ function DarkSkeleton({ className }: { className?: string }) {
 // Used by all pages that have the dark industrial header
 export function PageHeaderSkeleton({ eyebrow = true }: { eyebrow?: boolean }) {
   return (
-    <div className="relative bg-surface-bg px-4 py-14 sm:py-16">
+    <div className="relative bg-surface-bg px-4 py-14 sm:py-11">
       <div className="mx-auto max-w-6xl space-y-3 max-w-2xl">
         {eyebrow && <DarkSkeleton className="h-5 w-32" />}
         <DarkSkeleton className="h-10 w-72 sm:w-96" />

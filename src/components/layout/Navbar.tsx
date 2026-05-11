@@ -1,5 +1,6 @@
 'use client';
 
+import Image from "next/image";
 import { ShoppingCartIcon, Bars3Icon, XMarkIcon, UserCircleIcon, PhoneIcon } from '@heroicons/react/24/outline';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
@@ -21,15 +22,23 @@ const navLinks = [
 // PB monogram + lightning bolt logo
 function PBLogo() {
   return (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="36" height="36" rx="4" fill="#FF6B00"/>
-      {/* P */}
-      <text x="3" y="26" fontFamily="Rajdhani, Inter, sans-serif" fontWeight="700" fontSize="18" fill="white">P</text>
-      {/* B */}
-      <text x="16" y="26" fontFamily="Rajdhani, Inter, sans-serif" fontWeight="700" fontSize="18" fill="white">B</text>
-      {/* Lightning bolt accent */}
-      <path d="M30 6 L26 16 L29 16 L25 30 L32 17 L28.5 17 L33 6Z" fill="white" opacity="0.9"/>
-    </svg>
+    // <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    //   <rect width="36" height="36" rx="4" fill="#FF6B00"/>
+    //   {/* P */}
+    //   <text x="3" y="26" fontFamily="Rajdhani, Inter, sans-serif" fontWeight="700" fontSize="18" fill="white">P</text>
+    //   {/* B */}
+    //   <text x="16" y="26" fontFamily="Rajdhani, Inter, sans-serif" fontWeight="700" fontSize="18" fill="white">B</text>
+    //   {/* Lightning bolt accent */}
+    //   <path d="M30 6 L26 16 L29 16 L25 30 L32 17 L28.5 17 L33 6Z" fill="white" opacity="0.9"/>
+    // </svg>
+
+
+    <Image
+      src="/logoPB2.png"
+      alt="Logo"
+      width={36}
+      height={36}
+    />
   );
 }
 
