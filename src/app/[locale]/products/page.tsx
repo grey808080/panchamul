@@ -1,5 +1,7 @@
+import { Suspense } from 'react';
 import { createPublicClient } from '@/lib/supabase/server';
 import ProductsPageClient from './ProductsPageClient';
+import ProductResults from './ProductResults';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -7,72 +9,36 @@ export const metadata: Metadata = {
   description: 'Browse our complete collection of electrical products.',
 };
 
-// force-dynamic because URL searchParams change the results
-export const dynamic = 'force-dynamic';
+// Categories and brands are stable reference data — cache for 1 hour.
+// Only the product results are dynamic (depend on searchParams).
+export const revalidate = 3600;
+
+interface SearchParams {
+  category?: string;
+  brand?: string;
+  search?: string;
+  page?: string;
+  minPrice?: string;
+  maxPrice?: string;
+}
 
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    category?: string;
-    brand?: string;
-    search?: string;
-    page?: string;
-    minPrice?: string;
-    maxPrice?: string;
-  }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
   const supabase = createPublicClient();
 
-  const page = Number(params.page) || 1;
-  const perPage = 20;
-  const from = (page - 1) * perPage;
-  const minPrice = Number(params.minPrice) || 0;
-  const maxPrice = Number(params.maxPrice) || 0; // 0 = no upper limit
-
-  // Build products query — join categories so we get name_en/slug inline,
-  // avoiding a separate sequential category slug→id lookup
-  let productsQuery = supabase
-    .from('products')
-    .select('*, categories!inner(id, name_en, name_np, slug)', { count: 'exact' })
-    .eq('is_active', true);
-
-  // Filter by category slug directly via the join (no extra round-trip)
-  if (params.category) {
-    productsQuery = productsQuery.eq('categories.slug', params.category);
-  }
-  if (params.brand) {
-    productsQuery = productsQuery.eq('brand', params.brand);
-  }
-  if (params.search) {
-    productsQuery = productsQuery.or(
-      `name_en.ilike.%${params.search}%,name_np.ilike.%${params.search}%`
-    );
-  }
-  if (minPrice > 0) {
-    productsQuery = productsQuery.gte('price', minPrice);
-  }
-  if (maxPrice > 0) {
-    productsQuery = productsQuery.lte('price', maxPrice);
-  }
-
-  productsQuery = productsQuery
-    .order('is_featured', { ascending: false })
-    .order('created_at', { ascending: false })
-    .range(from, from + perPage - 1);
-
-  // All three queries run in parallel — no sequential waterfall
-  const [
-    { data: categories },
-    { data: products, count },
-    { data: brandRows },
-  ] = await Promise.all([
+  // Fetch stable reference data — categories and brands.
+  // These are cached and render immediately, giving the user
+  // a fully interactive shell (search, filters, tabs) before
+  // the product results arrive.
+  const [{ data: categories }, { data: brandRows }] = await Promise.all([
     supabase
       .from('categories')
       .select('*')
       .order('display_order', { ascending: true }),
-    productsQuery,
     supabase
       .from('products')
       .select('brand')
@@ -87,17 +53,42 @@ export default async function ProductsPage({
 
   return (
     <ProductsPageClient
-      products={products || []}
       categories={categories || []}
       brands={brands}
-      totalCount={count || 0}
-      currentPage={page}
-      perPage={perPage}
       initialCategory={params.category || null}
       initialBrand={params.brand || null}
       initialSearch={params.search || ''}
-      initialMinPrice={minPrice}
-      initialMaxPrice={maxPrice}
-    />
+      initialMinPrice={Number(params.minPrice) || 0}
+      initialMaxPrice={Number(params.maxPrice) || 0}
+    >
+      {/*
+        ProductResults is an async Server Component that fetches products
+        based on the current searchParams. It streams in independently —
+        the shell above is already interactive while this loads.
+      */}
+      <Suspense
+        key={JSON.stringify(params)}
+        fallback={
+          <div>
+            <div className="mb-4 h-4 w-28 rounded bg-slate-200 animate-pulse" />
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="rounded-lg border border-slate-200 bg-white overflow-hidden animate-pulse">
+                  <div className="aspect-square bg-slate-200" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 w-16 rounded bg-slate-200" />
+                    <div className="h-4 w-full rounded bg-slate-200" />
+                    <div className="h-4 w-4/5 rounded bg-slate-200" />
+                    <div className="h-5 w-24 rounded bg-slate-200 mt-1" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        }
+      >
+        <ProductResults searchParams={params} />
+      </Suspense>
+    </ProductsPageClient>
   );
 }

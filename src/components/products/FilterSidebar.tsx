@@ -176,7 +176,7 @@ export default function FilterSidebar({
 
   // Desktop: sticky sidebar card
   return (
-    <div className="sticky top-24 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
+    <div className="sticky top-24 rounded-lg border border-slate-200 bg-white p-5">
       {filterContent}
     </div>
   );

@@ -1,58 +1,37 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { XMarkIcon, FunnelIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import ProductGrid from '@/components/products/ProductGrid';
 import CategoryTabs from '@/components/products/CategoryTabs';
 import FilterSidebar from '@/components/products/FilterSidebar';
 import type { Tables } from '@/types/database';
-type Product = Tables<'products'>;
 type Category = Tables<'categories'>;
 
 const MAX_PRICE = 100000;
 
 interface ProductsPageClientProps {
-  products: Product[];
   categories: Category[];
   brands: string[];
-  totalCount: number;
-  currentPage: number;
-  perPage: number;
   initialCategory: string | null;
   initialBrand: string | null;
   initialSearch: string;
   initialMinPrice: number;
   initialMaxPrice: number;
-}
-
-// Smart pagination: show first, last, current ±1, with ellipsis
-function getPaginationPages(current: number, total: number): (number | '…')[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const pages: (number | '…')[] = [];
-  const around = new Set([1, total, current - 1, current, current + 1].filter((p) => p >= 1 && p <= total));
-  let prev: number | null = null;
-  for (const p of [...around].sort((a, b) => a - b)) {
-    if (prev !== null && p - prev > 1) pages.push('…');
-    pages.push(p);
-    prev = p;
-  }
-  return pages;
+  // The Suspense-wrapped ProductResults streams in as children
+  children: ReactNode;
 }
 
 export default function ProductsPageClient({
-  products,
   categories,
   brands,
-  totalCount,
-  currentPage,
-  perPage,
   initialCategory,
   initialBrand,
   initialSearch,
   initialMinPrice,
   initialMaxPrice,
+  children,
 }: ProductsPageClientProps) {
   const t = useTranslations('products');
   const router = useRouter();
@@ -69,11 +48,17 @@ export default function ProductsPageClient({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const totalPages = Math.ceil(totalCount / perPage);
-
+  // Builds the URL and navigates. Filter changes use replace (no history
+  // pollution), pagination uses push (back button works between pages).
   const buildAndNavigate = useCallback(
     (overrides: Record<string, string | null | number>) => {
-      const current = { category, brand, search, minPrice: priceRange[0], maxPrice: priceRange[1] };
+      const current = {
+        category,
+        brand,
+        search,
+        minPrice: priceRange[0],
+        maxPrice: priceRange[1],
+      };
       const merged = { ...current, ...overrides };
       const sp = new URLSearchParams();
       if (merged.category) sp.set('category', merged.category as string);
@@ -82,8 +67,6 @@ export default function ProductsPageClient({
       if ((merged.minPrice as number) > 0) sp.set('minPrice', String(merged.minPrice));
       if ((merged.maxPrice as number) < MAX_PRICE) sp.set('maxPrice', String(merged.maxPrice));
       const qs = sp.toString();
-      // Use replace so filter changes don't pollute browser history —
-      // the user can still go Back to leave the products page entirely.
       const isPagination = 'page' in overrides && Object.keys(overrides).length === 1;
       if (isPagination) {
         router.push(qs ? `${pathname}?${qs}` : pathname);
@@ -104,8 +87,6 @@ export default function ProductsPageClient({
     buildAndNavigate({ brand: b, page: null });
   };
 
-  // Search: update local state immediately for snappy UI,
-  // navigate only after 600ms idle (not on every keystroke)
   const handleSearchInput = (val: string) => {
     setLocalSearch(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -121,9 +102,7 @@ export default function ProductsPageClient({
     buildAndNavigate({ search: localSearch || null, page: null });
   };
 
-  const handlePriceChange = (range: [number, number]) => {
-    setPriceRange(range);
-  };
+  const handlePriceChange = (range: [number, number]) => setPriceRange(range);
 
   const handlePriceCommit = (range: [number, number]) => {
     setPriceRange(range);
@@ -152,7 +131,8 @@ export default function ProductsPageClient({
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Page Header — dark industrial */}
+
+      {/* ── Dark header — renders immediately, no data dependency ── */}
       <div className="relative overflow-hidden bg-surface-bg">
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.05]"
@@ -163,11 +143,15 @@ export default function ProductsPageClient({
         />
         <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="max-w-2xl">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-2">Catalogue</p>
-            <h1 className="font-heading text-3xl font-bold text-white md:text-4xl">{t('title')}</h1>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-2">
+              Catalogue
+            </p>
+            <h1 className="font-heading text-3xl font-bold text-white md:text-4xl">
+              {t('title')}
+            </h1>
             <p className="mt-1 text-slate-400 text-sm">{t('subtitle')}</p>
 
-            {/* Search bar */}
+            {/* Search — interactive immediately */}
             <div className="mt-5 max-w-xl">
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -187,8 +171,9 @@ export default function ProductsPageClient({
         <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 bg-white">
-        {/* Category Tabs */}
+      <div className="mx-auto max-w-7xl px-4 py-6">
+
+        {/* Category tabs — interactive immediately */}
         <div className="mb-5">
           <CategoryTabs
             categories={categories}
@@ -200,7 +185,9 @@ export default function ProductsPageClient({
         {/* Active filter chips */}
         {activeFilterCount > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Active:</span>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              Active:
+            </span>
             {categoryLabel && (
               <Chip label={categoryLabel} onRemove={() => handleCategoryChange(null)} />
             )}
@@ -208,7 +195,14 @@ export default function ProductsPageClient({
               <Chip label={brand} onRemove={() => handleBrandChange(null)} />
             )}
             {search && (
-              <Chip label={`"${search}"`} onRemove={() => { setSearch(''); setLocalSearch(''); buildAndNavigate({ search: null, page: null }); }} />
+              <Chip
+                label={`"${search}"`}
+                onRemove={() => {
+                  setSearch('');
+                  setLocalSearch('');
+                  buildAndNavigate({ search: null, page: null });
+                }}
+              />
             )}
             {(priceRange[0] > 0 || priceRange[1] < MAX_PRICE) && (
               <Chip
@@ -225,9 +219,10 @@ export default function ProductsPageClient({
           </div>
         )}
 
-        {/* Main content: sidebar + grid */}
+        {/* Main layout: sidebar + product area */}
         <div className="flex gap-8">
-          {/* Desktop sidebar — hidden on mobile */}
+
+          {/* Desktop sidebar — interactive immediately */}
           <div className="hidden lg:block w-64 shrink-0">
             <FilterSidebar
               categories={categories}
@@ -244,17 +239,13 @@ export default function ProductsPageClient({
             />
           </div>
 
+          {/* Product results area — streams in via Suspense */}
           <div className="flex-1 min-w-0">
-            {/* Results bar */}
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <p className="text-sm text-slate-500">
-                {t('showingResults', { count: totalCount })}
-              </p>
-
-              {/* Mobile filter button */}
+            {/* Mobile filter button */}
+            <div className="mb-4 flex items-center justify-end lg:hidden">
               <button
                 onClick={() => setMobileFiltersOpen(true)}
-                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 lg:hidden"
+                className="flex items-center gap-2 rounded border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 <FunnelIcon className="h-4 w-4" />
                 {t('filters')}
@@ -266,30 +257,8 @@ export default function ProductsPageClient({
               </button>
             </div>
 
-            <ProductGrid products={products} />
-
-            {/* Smart pagination */}
-            {totalPages > 1 && (
-              <div className="mt-10 flex items-center justify-center gap-1.5">
-                {getPaginationPages(currentPage, totalPages).map((p, i) =>
-                  p === '…' ? (
-                    <span key={`ellipsis-${i}`} className="px-1 text-slate-400 text-sm select-none">…</span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => buildAndNavigate({ page: p })}
-                      className={`h-10 w-10 rounded-xl text-sm font-medium transition-all ${
-                        p === currentPage
-                          ? 'bg-primary text-white shadow-md shadow-primary/30'
-                          : 'bg-white text-slate-600 hover:bg-slate-100 ring-1 ring-slate-200'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  )
-                )}
-              </div>
-            )}
+            {/* ← ProductResults streams in here */}
+            {children}
           </div>
         </div>
       </div>
@@ -298,18 +267,18 @@ export default function ProductsPageClient({
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50"
             onClick={() => setMobileFiltersOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl">
+          <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-lg bg-white p-6 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                <FunnelIcon className="h-5 w-5" />
+              <h2 className="font-heading text-base font-bold text-slate-800 flex items-center gap-2">
+                <FunnelIcon className="h-4 w-4" />
                 {t('filters')}
               </h2>
               <button
                 onClick={() => setMobileFiltersOpen(false)}
-                className="rounded-full p-2 hover:bg-slate-100 transition-colors"
+                className="rounded p-1.5 hover:bg-slate-100 transition-colors"
               >
                 <XMarkIcon className="h-5 w-5 text-slate-500" />
               </button>
@@ -317,15 +286,24 @@ export default function ProductsPageClient({
             <FilterSidebar
               categories={categories}
               selectedCategory={category}
-              onCategoryChange={(slug) => { handleCategoryChange(slug); setMobileFiltersOpen(false); }}
+              onCategoryChange={(slug) => {
+                handleCategoryChange(slug);
+                setMobileFiltersOpen(false);
+              }}
               brands={brands}
               selectedBrand={brand}
-              onBrandChange={(b) => { handleBrandChange(b); setMobileFiltersOpen(false); }}
+              onBrandChange={(b) => {
+                handleBrandChange(b);
+                setMobileFiltersOpen(false);
+              }}
               priceRange={priceRange}
               maxPrice={MAX_PRICE}
               onPriceChange={handlePriceChange}
               onPriceCommit={handlePriceCommit}
-              onReset={() => { handleReset(); setMobileFiltersOpen(false); }}
+              onReset={() => {
+                handleReset();
+                setMobileFiltersOpen(false);
+              }}
               inlineMode
             />
           </div>
@@ -337,11 +315,14 @@ export default function ProductsPageClient({
 
 function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+    <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
       {label}
-      <button onClick={onRemove} className="ml-0.5 rounded-full hover:bg-primary/20 p-0.5 transition-colors">
+      <button
+        onClick={onRemove}
+        className="ml-0.5 rounded hover:bg-primary/20 p-0.5 transition-colors"
+      >
         <XMarkIcon className="h-3 w-3" />
       </button>
     </span>
   );
-}                                                                                   
+}
