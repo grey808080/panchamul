@@ -2,15 +2,11 @@
 
 import { useRouter, usePathname } from '@/i18n/navigation';
 
-const MAX_PRICE = 100000;
-
 interface SearchParams {
   category?: string;
   brand?: string;
   search?: string;
   page?: string;
-  minPrice?: string;
-  maxPrice?: string;
 }
 
 interface ProductPaginationProps {
@@ -47,9 +43,6 @@ export default function ProductPagination({
     if (searchParams.category) sp.set('category', searchParams.category);
     if (searchParams.brand) sp.set('brand', searchParams.brand);
     if (searchParams.search) sp.set('search', searchParams.search);
-    if (Number(searchParams.minPrice) > 0) sp.set('minPrice', searchParams.minPrice!);
-    if (Number(searchParams.maxPrice) > 0 && Number(searchParams.maxPrice) < MAX_PRICE)
-      sp.set('maxPrice', searchParams.maxPrice!);
     if (page > 1) sp.set('page', String(page));
     const qs = sp.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);

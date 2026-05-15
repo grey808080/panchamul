@@ -9,16 +9,12 @@ import FilterSidebar from '@/components/products/FilterSidebar';
 import type { Tables } from '@/types/database';
 type Category = Tables<'categories'>;
 
-const MAX_PRICE = 100000;
-
 interface ProductsPageClientProps {
   categories: Category[];
   brands: string[];
   initialCategory: string | null;
   initialBrand: string | null;
   initialSearch: string;
-  initialMinPrice: number;
-  initialMaxPrice: number;
   // The Suspense-wrapped ProductResults streams in as children
   children: ReactNode;
 }
@@ -29,8 +25,6 @@ export default function ProductsPageClient({
   initialCategory,
   initialBrand,
   initialSearch,
-  initialMinPrice,
-  initialMaxPrice,
   children,
 }: ProductsPageClientProps) {
   const t = useTranslations('products');
@@ -41,10 +35,6 @@ export default function ProductsPageClient({
   const [brand, setBrand] = useState(initialBrand);
   const [search, setSearch] = useState(initialSearch);
   const [localSearch, setLocalSearch] = useState(initialSearch);
-  const [priceRange, setPriceRange] = useState<[number, number]>([
-    initialMinPrice,
-    initialMaxPrice || MAX_PRICE,
-  ]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -52,20 +42,12 @@ export default function ProductsPageClient({
   // pollution), pagination uses push (back button works between pages).
   const buildAndNavigate = useCallback(
     (overrides: Record<string, string | null | number>) => {
-      const current = {
-        category,
-        brand,
-        search,
-        minPrice: priceRange[0],
-        maxPrice: priceRange[1],
-      };
+      const current = { category, brand, search };
       const merged = { ...current, ...overrides };
       const sp = new URLSearchParams();
       if (merged.category) sp.set('category', merged.category as string);
       if (merged.brand) sp.set('brand', merged.brand as string);
       if (merged.search) sp.set('search', merged.search as string);
-      if ((merged.minPrice as number) > 0) sp.set('minPrice', String(merged.minPrice));
-      if ((merged.maxPrice as number) < MAX_PRICE) sp.set('maxPrice', String(merged.maxPrice));
       const qs = sp.toString();
       const isPagination = 'page' in overrides && Object.keys(overrides).length === 1;
       if (isPagination) {
@@ -74,7 +56,7 @@ export default function ProductsPageClient({
         router.replace(qs ? `${pathname}?${qs}` : pathname);
       }
     },
-    [category, brand, search, priceRange, router, pathname]
+    [category, brand, search, router, pathname]
   );
 
   const handleCategoryChange = (slug: string | null) => {
@@ -102,28 +84,15 @@ export default function ProductsPageClient({
     buildAndNavigate({ search: localSearch || null, page: null });
   };
 
-  const handlePriceChange = (range: [number, number]) => setPriceRange(range);
-
-  const handlePriceCommit = (range: [number, number]) => {
-    setPriceRange(range);
-    buildAndNavigate({ minPrice: range[0], maxPrice: range[1], page: null });
-  };
-
   const handleReset = () => {
     setCategory(null);
     setBrand(null);
     setSearch('');
     setLocalSearch('');
-    setPriceRange([0, MAX_PRICE]);
     router.push(pathname);
   };
 
-  const activeFilterCount = [
-    category,
-    brand,
-    search,
-    priceRange[0] > 0 || priceRange[1] < MAX_PRICE ? 'price' : null,
-  ].filter(Boolean).length;
+  const activeFilterCount = [category, brand, search].filter(Boolean).length;
 
   const categoryLabel = category
     ? categories.find((c) => c.slug === category)?.name_en ?? category
@@ -204,12 +173,6 @@ export default function ProductsPageClient({
                 }}
               />
             )}
-            {(priceRange[0] > 0 || priceRange[1] < MAX_PRICE) && (
-              <Chip
-                label={`रु ${priceRange[0].toLocaleString()} – रु ${priceRange[1].toLocaleString()}`}
-                onRemove={() => handlePriceCommit([0, MAX_PRICE])}
-              />
-            )}
             <button
               onClick={handleReset}
               className="ml-1 text-xs text-slate-400 hover:text-red-500 transition-colors underline underline-offset-2"
@@ -231,10 +194,6 @@ export default function ProductsPageClient({
               brands={brands}
               selectedBrand={brand}
               onBrandChange={handleBrandChange}
-              priceRange={priceRange}
-              maxPrice={MAX_PRICE}
-              onPriceChange={handlePriceChange}
-              onPriceCommit={handlePriceCommit}
               onReset={handleReset}
             />
           </div>
@@ -296,10 +255,6 @@ export default function ProductsPageClient({
                 handleBrandChange(b);
                 setMobileFiltersOpen(false);
               }}
-              priceRange={priceRange}
-              maxPrice={MAX_PRICE}
-              onPriceChange={handlePriceChange}
-              onPriceCommit={handlePriceCommit}
               onReset={() => {
                 handleReset();
                 setMobileFiltersOpen(false);

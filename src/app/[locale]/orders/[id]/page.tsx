@@ -7,6 +7,34 @@ import { notFound, redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
+// Payment status banners — shown when redirected back from online payment
+const PAYMENT_BANNERS = {
+  success: {
+    bg: 'bg-emerald-50 border-emerald-200',
+    text: 'text-emerald-800',
+    sub: 'text-emerald-600',
+    icon: '✅',
+    title: 'Payment Successful',
+    desc: 'Your online payment was confirmed. Your order is now being processed.',
+  },
+  failed: {
+    bg: 'bg-red-50 border-red-200',
+    text: 'text-red-800',
+    sub: 'text-red-600',
+    icon: '❌',
+    title: 'Payment Failed',
+    desc: 'Your online payment could not be completed. Your order is saved — you can retry payment or contact us.',
+  },
+  review: {
+    bg: 'bg-amber-50 border-amber-200',
+    text: 'text-amber-800',
+    sub: 'text-amber-600',
+    icon: '⚠️',
+    title: 'Payment Under Review',
+    desc: 'There was an issue verifying your payment amount. Our team will review and confirm shortly.',
+  },
+} as const;
+
 // Status config — colours, icons, labels
 const STATUS_CONFIG = {
   received:         { color: 'blue',   icon: '📥', label: 'Order Received' },
@@ -41,10 +69,13 @@ function safeDate(d: unknown) {
 
 export default async function OrderDetailsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ payment?: string }>;
 }) {
   const { locale, id } = await params;
+  const { payment: paymentResult } = await searchParams;
   setRequestLocale(locale);
   const tO = await getTranslations('orders');
 
@@ -89,6 +120,10 @@ export default async function OrderDetailsPage({
   const delivery = Number(order.delivery_charge ?? 0);
   const total = Number(order.total ?? 0);
 
+  const paymentBanner = paymentResult && paymentResult in PAYMENT_BANNERS
+    ? PAYMENT_BANNERS[paymentResult as keyof typeof PAYMENT_BANNERS]
+    : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="mx-auto max-w-5xl px-4 py-10">
@@ -115,6 +150,17 @@ export default async function OrderDetailsPage({
             ← {tO('backToAccount')}
           </Link>
         </div>
+
+        {/* Payment result banner — shown after Khalti redirect */}
+        {paymentBanner && (
+          <div className={`mb-6 flex items-start gap-4 rounded-lg border p-4 ${paymentBanner.bg}`}>
+            <span className="text-2xl shrink-0">{paymentBanner.icon}</span>
+            <div>
+              <p className={`font-bold text-sm ${paymentBanner.text}`}>{paymentBanner.title}</p>
+              <p className={`text-xs mt-0.5 ${paymentBanner.sub}`}>{paymentBanner.desc}</p>
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">

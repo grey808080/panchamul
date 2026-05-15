@@ -15,15 +15,12 @@ import ProductGrid from '@/components/products/ProductGrid';
 import ProductPagination from './ProductPagination';
 
 const PER_PAGE = 20;
-const MAX_PRICE = 100000;
 
 interface SearchParams {
   category?: string;
   brand?: string;
   search?: string;
   page?: string;
-  minPrice?: string;
-  maxPrice?: string;
 }
 
 export default async function ProductResults({
@@ -35,8 +32,6 @@ export default async function ProductResults({
 
   const page = Math.max(1, Number(searchParams.page) || 1);
   const from = (page - 1) * PER_PAGE;
-  const minPrice = Number(searchParams.minPrice) || 0;
-  const maxPrice = Number(searchParams.maxPrice) || 0;
 
   let query = supabase
     .from('products')
@@ -54,9 +49,6 @@ export default async function ProductResults({
       `name_en.ilike.%${searchParams.search}%,name_np.ilike.%${searchParams.search}%`
     );
   }
-  if (minPrice > 0) query = query.gte('price', minPrice);
-  if (maxPrice > 0) query = query.lte('price', maxPrice);
-
   const { data: products, count } = await query
     .order('is_featured', { ascending: false })
     .order('created_at', { ascending: false })

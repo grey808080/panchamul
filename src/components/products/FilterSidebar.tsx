@@ -12,11 +12,6 @@ interface FilterSidebarProps {
   brands: string[];
   selectedBrand: string | null;
   onBrandChange: (brand: string | null) => void;
-  priceRange: [number, number];
-  maxPrice: number;
-  onPriceChange: (range: [number, number]) => void;
-  /** Called when the user finishes dragging the price slider (mouseup/touchend) */
-  onPriceCommit?: (range: [number, number]) => void;
   onReset: () => void;
   /** When true, renders filter content without the sticky wrapper (used inside the mobile bottom sheet) */
   inlineMode?: boolean;
@@ -29,21 +24,13 @@ export default function FilterSidebar({
   brands,
   selectedBrand,
   onBrandChange,
-  priceRange,
-  maxPrice,
-  onPriceChange,
-  onPriceCommit,
   onReset,
   inlineMode = false,
 }: FilterSidebarProps) {
   const locale = useLocale();
   const t = useTranslations('products');
 
-  const hasFilters =
-    selectedCategory ||
-    selectedBrand ||
-    priceRange[0] > 0 ||
-    priceRange[1] < maxPrice;
+  const hasFilters = selectedCategory || selectedBrand;
 
   const filterContent = (
     <div className="space-y-6">
@@ -138,43 +125,13 @@ export default function FilterSidebar({
           </div>
         </div>
       )}
-
-      {/* Price Range */}
-      <div>
-        <h4 className="mb-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-          {t('priceRange')}
-        </h4>
-        <div className="space-y-3 px-1">
-          <div className="flex justify-between text-xs font-medium text-slate-600">
-            <span>रु {priceRange[0].toLocaleString()}</span>
-            <span>रु {priceRange[1].toLocaleString()}</span>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={maxPrice}
-            step={500}
-            value={priceRange[1]}
-            onChange={(e) => onPriceChange([priceRange[0], Number(e.target.value)])}
-            onMouseUp={(e) => onPriceCommit?.([priceRange[0], Number((e.target as HTMLInputElement).value)])}
-            onTouchEnd={(e) => onPriceCommit?.([priceRange[0], Number((e.target as HTMLInputElement).value)])}
-            className="w-full accent-primary cursor-pointer"
-          />
-          <div className="flex justify-between text-[10px] text-slate-400">
-            <span>रु 0</span>
-            <span>रु {maxPrice.toLocaleString()}</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 
-  // inlineMode: no wrapper (used inside mobile bottom sheet or parent manages layout)
   if (inlineMode) {
     return filterContent;
   }
 
-  // Desktop: sticky sidebar card
   return (
     <div className="sticky top-24 rounded-lg border border-slate-200 bg-white p-5">
       {filterContent}

@@ -34,7 +34,7 @@ function PBLogo() {
 
 
     <Image
-      src="/logoPB2.png"
+      src="/logoPB.png"
       alt="Logo"
       width={36}
       height={36}

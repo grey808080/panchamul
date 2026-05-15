@@ -55,8 +55,14 @@ export default function CheckoutPage() {
     if (!validate() || items.length === 0) return;
 
     setLoading(true);
+    setErrors({});
+
     try {
-      const res = await fetch('/api/orders', {
+      const orderNumber = generateOrderNumber();
+      const total = getTotal();
+
+      // Step 1 — Create the order (all payment methods)
+      const orderRes = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -69,22 +75,83 @@ export default function CheckoutPage() {
             price: i.price,
           })),
           payment_method: paymentMethod,
-          order_number: generateOrderNumber(),
-          total: getTotal(),
+          order_number: orderNumber,
+          total,
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
+      if (!orderRes.ok) {
+        const data = await orderRes.json().catch(() => null);
         throw new Error(data?.error || 'Order failed');
       }
-      const data = await res.json();
+
+      const orderData = await orderRes.json();
+
+      // Step 2 — Handle payment method
+      if (paymentMethod === 'khalti') {
+        const khaltiRes = await fetch('/api/payment/khalti/initiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order_id: orderData.id,
+            order_number: orderData.order_number,
+            amount: total,
+            customer_name: form.name,
+            customer_phone: form.phone,
+          }),
+        });
+
+        if (!khaltiRes.ok) {
+          const data = await khaltiRes.json().catch(() => null);
+          throw new Error(data?.error || 'Khalti payment initiation failed');
+        }
+
+        const khaltiData = await khaltiRes.json();
+        clearCart();
+        window.location.href = khaltiData.payment_url;
+        return;
+      }
+
+      if (paymentMethod === 'esewa') {
+        const esewaRes = await fetch('/api/payment/esewa/initiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order_id: orderData.id,
+            order_number: orderData.order_number,
+            amount: total,
+          }),
+        });
+
+        if (!esewaRes.ok) {
+          const data = await esewaRes.json().catch(() => null);
+          throw new Error(data?.error || 'eSewa payment initiation failed');
+        }
+
+        const esewaData = await esewaRes.json();
+        clearCart();
+
+        const formEl = document.createElement('form');
+        formEl.method = 'POST';
+        formEl.action = esewaData.form_action;
+        for (const [name, value] of Object.entries(esewaData.fields as Record<string, string>)) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = String(value);
+          formEl.appendChild(input);
+        }
+        document.body.appendChild(formEl);
+        formEl.submit();
+        return;
+      }
+
+      // COD / bank transfer — go straight to confirmation
       clearCart();
-      router.push(`/orders/${data.order_number}`);
+      router.push(`/orders/${orderData.order_number}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : t('orderFailed');
       setErrors({ submit: message });
-    } finally {
       setLoading(false);
     }
   };
@@ -92,10 +159,34 @@ export default function CheckoutPage() {
   const total = getTotal();
 
   const paymentMethods = [
-    { id: 'cod',           label: t('cod'),         icon: '💵', available: true,  desc: 'Pay when delivered' },
-    { id: 'bank_transfer', label: t('bankTransfer'), icon: '🏦', available: true,  desc: 'Direct bank deposit' },
-    { id: 'esewa',         label: 'eSewa',           icon: '📱', available: false, desc: 'Coming soon' },
-    { id: 'khalti',        label: 'Khalti',          icon: '💜', available: false, desc: 'Coming soon' },
+    {
+      id: 'cod',
+      label: t('cod'),
+      icon: '💵',
+      available: true,
+      desc: 'Pay when delivered',
+    },
+    {
+      id: 'bank_transfer',
+      label: t('bankTransfer'),
+      icon: '🏦',
+      available: true,
+      desc: 'Direct bank deposit',
+    },
+    {
+      id: 'khalti',
+      label: 'Khalti',
+      icon: '💜',
+      available: true,
+      desc: 'Pay online instantly',
+    },
+    {
+      id: 'esewa',
+      label: 'eSewa',
+      icon: '📱',
+      available: true,
+      desc: 'Pay online instantly',
+    },
   ];
 
   if (authChecking) return (
@@ -113,6 +204,9 @@ export default function CheckoutPage() {
       <p className="text-slate-500 font-medium">{t('emptyCart')}</p>
     </div>
   );
+
+  const isKhalti = paymentMethod === 'khalti';
+  const isEsewa = paymentMethod === 'esewa';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -241,6 +335,28 @@ export default function CheckoutPage() {
                     </button>
                   ))}
                 </div>
+
+                {/* Khalti info banner */}
+                {isKhalti && (
+                  <div className="mx-5 mb-5 rounded-lg border border-purple-200 bg-purple-50 px-4 py-3">
+                    <p className="text-xs font-semibold text-purple-800">
+                      💜 You&apos;ll be redirected to Khalti to complete payment
+                    </p>
+                    <p className="text-[11px] text-purple-600 mt-0.5">
+                      Your order will be created first, then you&apos;ll pay securely on Khalti&apos;s page.
+                    </p>
+                  </div>
+                )}
+                {isEsewa && (
+                  <div className="mx-5 mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                    <p className="text-xs font-semibold text-emerald-800">
+                      📱 You&apos;ll be redirected to eSewa to complete payment
+                    </p>
+                    <p className="text-[11px] text-emerald-600 mt-0.5">
+                      Your order will be created first, then you&apos;ll pay securely on eSewa&apos;s page.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -293,12 +409,31 @@ export default function CheckoutPage() {
                   )}
                   <Button
                     type="submit"
-                    className="w-full"
+                    className={`w-full ${
+                      isKhalti
+                        ? 'bg-purple-600 hover:bg-purple-700'
+                        : isEsewa
+                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                        : ''
+                    }`}
                     size="lg"
                     disabled={loading}
                     isLoading={loading}
                   >
-                    {loading ? t('placing') : user ? t('placeOrder') : 'Sign In to Order'}
+                    {loading
+                      ? (isKhalti
+                          ? 'Redirecting to Khalti…'
+                          : isEsewa
+                          ? 'Redirecting to eSewa…'
+                          : t('placing'))
+                      : user
+                      ? (isKhalti
+                          ? 'Pay with Khalti 💜'
+                          : isEsewa
+                          ? 'Pay with eSewa 📱'
+                          : t('placeOrder'))
+                      : 'Sign In to Order'
+                    }
                   </Button>
 
                   {/* Trust line */}

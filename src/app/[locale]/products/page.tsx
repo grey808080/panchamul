@@ -18,8 +18,6 @@ interface SearchParams {
   brand?: string;
   search?: string;
   page?: string;
-  minPrice?: string;
-  maxPrice?: string;
 }
 
 export default async function ProductsPage({
@@ -58,8 +56,6 @@ export default async function ProductsPage({
       initialCategory={params.category || null}
       initialBrand={params.brand || null}
       initialSearch={params.search || ''}
-      initialMinPrice={Number(params.minPrice) || 0}
-      initialMaxPrice={Number(params.maxPrice) || 0}
     >
       {/*
         ProductResults is an async Server Component that fetches products
