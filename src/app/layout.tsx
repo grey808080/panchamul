@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon.png', type: 'image/png' },
     ],
   },
   manifest: '/site.webmanifest',
