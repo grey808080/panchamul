@@ -22,28 +22,22 @@ interface ImageTransformOptions {
 
 export function getImageUrl(
   url: string | null | undefined,
-  options: ImageTransformOptions = {}
+  // options kept for API compatibility — transforms disabled (requires Supabase Pro)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _options: ImageTransformOptions = {}
 ): string {
   if (!url) return '/placeholder-product.png';
 
-  // Only transform Supabase Storage public URLs
-  const isSupabaseStorage = url.includes('/storage/v1/object/public/');
-  if (!isSupabaseStorage || Object.keys(options).length === 0) return url;
-
-  // Convert /object/public/ → /render/image/public/ for transform endpoint
-  const transformUrl = url.replace(
-    '/storage/v1/object/public/',
-    '/storage/v1/render/image/public/'
-  );
-
-  const params = new URLSearchParams();
-  if (options.width) params.set('width', String(options.width));
-  if (options.height) params.set('height', String(options.height));
-  if (options.quality) params.set('quality', String(options.quality));
-  if (options.format) params.set('format', options.format);
-  if (options.resize) params.set('resize', options.resize);
-
-  return `${transformUrl}?${params.toString()}`;
+  // ⚠️  The Supabase /render/image/public/ transform endpoint requires a Pro plan.
+  // On the free tier it returns an error, which breaks images in Vercel production
+  // even though they appear fine on localhost.
+  // Fix: always serve the plain /object/public/ URL and let Next.js <Image>
+  // handle optimisation on its side (it already does width/quality via its own CDN).
+  //
+  // To re-enable Supabase transforms after upgrading to Pro, restore the logic below:
+  //   const transformUrl = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
+  //   const params = new URLSearchParams(); ...
+  return url;
 }
 
 /** Preset: product card thumbnail (400px wide, 75 quality) */
