@@ -7,7 +7,6 @@ import { useState, useEffect } from 'react';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { useCartStore } from '@/lib/store/cartStore';
 import { useAuth } from '@/lib/hooks/useAuth';
-import LanguageSwitcher from './LanguageSwitcher';
 import CartDrawer from '../cart/CartDrawer';
 import AuthModal from '../ui/AuthModal';
 
@@ -101,8 +100,6 @@ export default function Navbar() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-1.5">
-              <LanguageSwitcher />
-
               {/* Auth */}
               {!loading && (
                 user ? (

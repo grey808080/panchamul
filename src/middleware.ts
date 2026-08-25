@@ -1,11 +1,17 @@
+import createIntlMiddleware from 'next-intl/middleware';
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { routing } from './i18n/routing'
+
+const handleI18nRouting = createIntlMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  // 1. Run next-intl first — it internally rewrites paths like /products
+  //    to /en/products so the [locale] segment in the file system is populated.
+  //    With localePrefix: 'never' the browser URL stays clean (/products).
+  const response = handleI18nRouting(request);
 
+  // 2. Layer Supabase session management on top of that response.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -18,9 +24,8 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-          supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            response.cookies.set(name, value, options)
           )
         },
       },
@@ -32,16 +37,14 @@ export async function middleware(request: NextRequest) {
 
   // Protect admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    // Always allow login page through
     if (request.nextUrl.pathname === '/admin/login') {
-      return supabaseResponse
+      return response
     }
 
     if (!user) {
       return NextResponse.redirect(new URL('/admin/login', request.url))
     }
 
-    // Check is_admin
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin')
@@ -53,7 +56,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return supabaseResponse
+  return response
 }
 
 export const config = {

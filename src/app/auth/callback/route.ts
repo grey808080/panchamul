@@ -6,8 +6,8 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
 
   // Validate next param to prevent open redirect — must be a relative path
-  const rawNext = searchParams.get('next') ?? '/en';
-  const next = rawNext.startsWith('/') ? rawNext : '/en';
+  const rawNext = searchParams.get('next') ?? '/';
+  const next = rawNext.startsWith('/') ? rawNext : '/';
 
   if (code) {
     const supabase = await createClient();

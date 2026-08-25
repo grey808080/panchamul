@@ -38,7 +38,7 @@ export default function AdminSidebar() {
   return (
     <div className="flex h-screen w-64 flex-col bg-slate-900 text-slate-300 shrink-0">
       <div className="flex h-16 items-center justify-center border-b border-slate-800 px-4">
-        <Link href="/en" className="flex items-center gap-2 group">
+        <Link href="/" className="flex items-center gap-2 group">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <BoltIcon className="h-4 w-4 text-white" />
           </div>
