@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPublicClient } from '@/lib/supabase/client';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { Button } from './Button';
 import toast from 'react-hot-toast';
 import { useLockBodyScroll } from '@/lib/hooks/useLockBodyScroll';
@@ -20,6 +20,7 @@ export default function AuthModal({ open, onClose, onSuccess, message }: AuthMod
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const supabase = createPublicClient();
 
   useLockBodyScroll(open);
@@ -136,15 +137,29 @@ export default function AuthModal({ open, onClose, onSuccess, message }: AuthMod
             </div>
             <div>
               <label className="label">Password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-field"
-                placeholder="••••••••"
-                minLength={6}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input-field pr-11"
+                  placeholder="••••••••"
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
