@@ -26,7 +26,6 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     defaultValues: {
       name_en: initialData?.name_en || '',
-      name_np: initialData?.name_np || '',
       slug: initialData?.slug || '',
       category_id: initialData?.category_id || '',
       brand: initialData?.brand || '',
@@ -34,7 +33,6 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
       compare_price: initialData?.compare_price || '',
       stock_qty: initialData?.stock_qty || 0,
       description_en: initialData?.description_en || '',
-      description_np: initialData?.description_np || '',
       is_featured: initialData?.is_featured || false,
       is_active: initialData?.is_active ?? true,
     },
@@ -91,10 +89,10 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
         {/* Main Details */}
         <div className="lg:col-span-2 space-y-6">
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Basic Information</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-5">Basic Information</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="label">Name (English) *</label>
+                <label className="label">Name *</label>
                 <input
                   {...register('name_en', { required: true })}
                   onChange={(e) => { register('name_en').onChange(e); handleNameChange(e); }}
@@ -103,23 +101,20 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
                 />
                 {errors.name_en && <p className="text-xs text-red-500 mt-1">Required</p>}
               </div>
+
               <div>
-                <label className="label">Name (Nepali)</label>
-                <input
-                  {...register('name_np')}
-                  className="input-field"
-                  placeholder="e.g. हेभेल्स तार"
-                />
-              </div>
-              <div>
-                <label className="label">Slug (URL) *</label>
+                <label className="label">
+                  Slug (URL) *
+                  {!initialData && <span className="ml-1.5 text-[10px] font-normal text-slate-400 normal-case tracking-normal">auto-generated from name</span>}
+                </label>
                 <input
                   {...register('slug', { required: true })}
-                  className="input-field"
+                  className="input-field font-mono text-sm"
                   placeholder="auto-generated"
                 />
                 {errors.slug && <p className="text-xs text-red-500 mt-1">Required</p>}
               </div>
+
               <div>
                 <label className="label">Category *</label>
                 <select
@@ -133,6 +128,7 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
                 </select>
                 {errors.category_id && <p className="text-xs text-red-500 mt-1">Required</p>}
               </div>
+
               <div>
                 <label className="label">Brand</label>
                 <input
@@ -143,30 +139,19 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
               </div>
             </div>
 
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="label">Description (English)</label>
-                <textarea
-                  {...register('description_en')}
-                  rows={4}
-                  className="input-field"
-                  placeholder="Product description..."
-                />
-              </div>
-              <div>
-                <label className="label">Description (Nepali)</label>
-                <textarea
-                  {...register('description_np')}
-                  rows={4}
-                  className="input-field"
-                  placeholder="सामग्रीको विवरण..."
-                />
-              </div>
+            <div className="mt-5">
+              <label className="label">Description</label>
+              <textarea
+                {...register('description_en')}
+                rows={4}
+                className="input-field"
+                placeholder="Product description..."
+              />
             </div>
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Images</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-5">Images</h3>
             <ImageUploader images={images} onChange={setImages} />
           </div>
         </div>
@@ -174,25 +159,35 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
         {/* Sidebar */}
         <div className="space-y-6">
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Pricing & Stock</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-5">Pricing &amp; Stock</h3>
             <div className="space-y-4">
               <div>
                 <label className="label">Price (NPR) *</label>
-                <input
-                  type="number"
-                  {...register('price', { required: true, min: 0 })}
-                  className="input-field"
-                  placeholder="0"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium pointer-events-none">Rs.</span>
+                  <input
+                    type="number"
+                    {...register('price', { required: true, min: 0 })}
+                    className="input-field pl-10"
+                    placeholder="0"
+                  />
+                </div>
+                {errors.price && <p className="text-xs text-red-500 mt-1">Required</p>}
               </div>
               <div>
-                <label className="label">Compare Price (Optional)</label>
-                <input
-                  type="number"
-                  {...register('compare_price')}
-                  className="input-field"
-                  placeholder="Original price before discount"
-                />
+                <label className="label">
+                  Compare Price
+                  <span className="ml-1.5 text-[10px] font-normal text-slate-400 normal-case tracking-normal">before discount</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium pointer-events-none">Rs.</span>
+                  <input
+                    type="number"
+                    {...register('compare_price')}
+                    className="input-field pl-10"
+                    placeholder="0"
+                  />
+                </div>
               </div>
               <div>
                 <label className="label">Stock Quantity *</label>
@@ -202,47 +197,54 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
                   className="input-field"
                   placeholder="0"
                 />
+                {errors.stock_qty && <p className="text-xs text-red-500 mt-1">Required</p>}
               </div>
             </div>
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Visibility</h3>
-            <div className="space-y-4">
-              <label className="flex items-center gap-3 cursor-pointer">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Visibility</h3>
+            <div className="divide-y divide-slate-100">
+              <label className="flex items-center justify-between gap-3 cursor-pointer py-3 hover:bg-slate-50 -mx-2 px-2 rounded-xl transition-colors">
+                <div>
+                  <p className="font-medium text-slate-700 text-sm">Active</p>
+                  <p className="text-xs text-slate-400">Visible to customers</p>
+                </div>
                 <input
                   type="checkbox"
                   {...register('is_active')}
-                  className="h-5 w-5 rounded text-primary focus:ring-primary/30"
+                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30 shrink-0"
                 />
-                <div>
-                  <p className="font-medium text-slate-700">Active</p>
-                  <p className="text-xs text-slate-400">Visible to customers</p>
-                </div>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer">
+              <label className="flex items-center justify-between gap-3 cursor-pointer py-3 hover:bg-slate-50 -mx-2 px-2 rounded-xl transition-colors">
+                <div>
+                  <p className="font-medium text-slate-700 text-sm">Featured</p>
+                  <p className="text-xs text-slate-400">Show on homepage</p>
+                </div>
                 <input
                   type="checkbox"
                   {...register('is_featured')}
-                  className="h-5 w-5 rounded text-primary focus:ring-primary/30"
+                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30 shrink-0"
                 />
-                <div>
-                  <p className="font-medium text-slate-700">Featured</p>
-                  <p className="text-xs text-slate-400">Show on homepage</p>
-                </div>
               </label>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end gap-4">
-        <Button variant="outline" type="button" onClick={() => router.push('/admin/products')}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Saving...' : initialData ? 'Update Product' : 'Create Product'}
-        </Button>
+      {/* Sticky save bar */}
+      <div className="sticky bottom-0 -mx-6 px-6 py-4 bg-white/90 backdrop-blur border-t border-slate-200 flex items-center gap-4">
+        <p className="text-xs text-slate-400 hidden sm:block flex-1">
+          {initialData ? 'Changes will be saved immediately.' : 'Product will be listed after saving.'}
+        </p>
+        <div className="flex items-center gap-3 ml-auto">
+          <Button variant="outline" type="button" onClick={() => router.push('/admin/products')}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Saving…' : initialData ? 'Update Product' : 'Create Product'}
+          </Button>
+        </div>
       </div>
     </form>
   );
