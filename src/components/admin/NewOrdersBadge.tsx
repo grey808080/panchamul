@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { createPublicClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 import { BellIcon } from '@heroicons/react/24/outline';
@@ -16,8 +16,6 @@ import { BellIcon } from '@heroicons/react/24/outline';
 export default function NewOrdersBadge() {
   const [newCount, setNewCount] = useState(0);
   const supabase = createPublicClient();
-  // Track whether we've received the first sync (skip initial snapshot)
-  const initialised = useRef(false);
 
   useEffect(() => {
     const channel = supabase
@@ -26,10 +24,6 @@ export default function NewOrdersBadge() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
-          if (!initialised.current) {
-            initialised.current = true;
-            return;
-          }
           const order = payload.new as { order_number?: string; customer_name?: string };
           setNewCount((c) => c + 1);
           toast(
@@ -56,11 +50,7 @@ export default function NewOrdersBadge() {
           );
         }
       )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          initialised.current = true;
-        }
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);

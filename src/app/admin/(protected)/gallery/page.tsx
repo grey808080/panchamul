@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/Button';
 import Image from 'next/image';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import ImageUploader from '@/components/admin/ImageUploader';
+import toast from 'react-hot-toast';
 
 export default function AdminGalleryPage() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const supabase = createPublicClient();
 
   useEffect(() => {
@@ -29,9 +31,18 @@ export default function AdminGalleryPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this image?')) return;
-    await supabase.from('gallery').delete().eq('id', id);
-    fetchItems();
+    if (pendingDeleteId !== id) {
+      setPendingDeleteId(id);
+      return;
+    }
+    setPendingDeleteId(null);
+    const { error } = await supabase.from('gallery').delete().eq('id', id);
+    if (error) {
+      toast.error('Failed to delete image');
+    } else {
+      toast.success('Image deleted');
+      setItems(prev => prev.filter(item => item.id !== id));
+    }
   };
 
   return (
@@ -49,22 +60,42 @@ export default function AdminGalleryPage() {
         {items.map((item) => (
           <div key={item.id} className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 ring-1 ring-slate-200">
             <Image src={item.image_url} alt="" fill className="object-cover" />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <select 
-                className="bg-white text-sm rounded px-2 py-1"
-                value={item.type}
-                onChange={async (e) => {
-                  await supabase.from('gallery').update({ type: e.target.value }).eq('id', item.id);
-                  fetchItems();
-                }}
-              >
-                <option value="store">Store</option>
-                <option value="work">Work</option>
-              </select>
-              <button onClick={() => handleDelete(item.id)} className="bg-red-500 text-white p-1.5 rounded hover:bg-red-600">
-                <TrashIcon className="h-4 w-4" />
-              </button>
-            </div>
+            {pendingDeleteId === item.id ? (
+              <div className="absolute inset-0 bg-red-900/80 flex flex-col items-center justify-center gap-2 p-2">
+                <p className="text-white text-xs font-semibold text-center">Delete image?</p>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="rounded-lg bg-red-400 px-3 py-1 text-white text-xs font-semibold hover:bg-red-300 transition-colors"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={() => setPendingDeleteId(null)}
+                    className="rounded-lg bg-white/20 px-3 py-1 text-white text-xs font-medium hover:bg-white/30 transition-colors"
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <select 
+                  className="bg-white text-sm rounded px-2 py-1"
+                  value={item.type}
+                  onChange={async (e) => {
+                    await supabase.from('gallery').update({ type: e.target.value }).eq('id', item.id);
+                    fetchItems();
+                  }}
+                >
+                  <option value="store">Store</option>
+                  <option value="work">Work</option>
+                </select>
+                <button onClick={() => handleDelete(item.id)} className="bg-red-500 text-white p-1.5 rounded hover:bg-red-600">
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>

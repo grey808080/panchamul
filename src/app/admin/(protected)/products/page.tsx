@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPublicClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils/formatPrice';
 import { Button } from '@/components/ui/Button';
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon, AdjustmentsHorizontalIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import type { Tables } from '@/types';
+import toast from 'react-hot-toast';
 
 type ProductWithCategory = Tables<'products'> & {
   categories: Pick<Tables<'categories'>, 'name_en'> | null;
@@ -17,8 +18,38 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<ProductWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
   const [search, setSearch] = useState('');
+  // Filter state
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedStock, setSelectedStock] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
   const supabase = createPublicClient();
+
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node))
+        setShowFilters(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Extract unique categories from loaded products
+  const categories = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    products.forEach(p => {
+      const name = p.categories?.name_en;
+      if (name && !seen.has(name)) { seen.add(name); result.push(name); }
+    });
+    return result;
+  }, [products]);
+
+  const activeFilterCount = [selectedCategory, selectedStock, selectedStatus].filter(Boolean).length;
 
   useEffect(() => { fetchProducts(); }, []);
 
@@ -32,21 +63,42 @@ export default function AdminProductsPage() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    // First click: show inline confirmation banner
+    if (pendingDelete?.id !== id) {
+      setPendingDelete({ id, name });
+      return;
+    }
+    // Confirmed: proceed with delete
     setDeleting(id);
+    setPendingDelete(null);
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) {
-      alert('Error deleting: ' + error.message);
+      toast.error('Failed to delete product');
     } else {
+      toast.success(`"${name}" deleted`);
       setProducts(prev => prev.filter(p => p.id !== id));
     }
     setDeleting(null);
   };
 
-  const filtered = products.filter(p =>
-    p.name_en.toLowerCase().includes(search.toLowerCase()) ||
-    p.brand?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = products.filter(p => {
+    const matchesSearch = !search ||
+      p.name_en.toLowerCase().includes(search.toLowerCase()) ||
+      p.brand?.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = !selectedCategory || p.categories?.name_en === selectedCategory;
+    const stock = p.stock_qty ?? 0;
+    const matchesStock =
+      !selectedStock ||
+      (selectedStock === 'in_stock'    && stock > 10) ||
+      (selectedStock === 'low_stock'   && stock > 0 && stock <= 10) ||
+      (selectedStock === 'out_stock'   && stock === 0);
+    const matchesStatus =
+      !selectedStatus ||
+      (selectedStatus === 'active'   && p.is_active) ||
+      (selectedStatus === 'draft'    && !p.is_active) ||
+      (selectedStatus === 'featured' && p.is_featured);
+    return matchesSearch && matchesCategory && matchesStock && matchesStatus;
+  });
 
   if (loading) return (
     <div className="space-y-4">
@@ -71,15 +123,150 @@ export default function AdminProductsPage() {
         </Link>
       </div>
 
-      {/* Search */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="input-field max-w-sm"
-        />
+      {/* Delete confirmation banner */}
+      {pendingDelete && (
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl bg-red-50 p-4 ring-1 ring-red-200">
+          <div>
+            <p className="font-semibold text-red-800">Delete &ldquo;{pendingDelete.name}&rdquo;?</p>
+            <p className="text-sm text-red-600">This cannot be undone.</p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => handleDelete(pendingDelete.id, pendingDelete.name)}
+              disabled={!!deleting}
+              className="rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-60 transition-colors"
+            >
+              Yes, delete
+            </button>
+            <button
+              onClick={() => setPendingDelete(null)}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Search + Filter row */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1">
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search products…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="input-field pl-9 pr-8"
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <XMarkIcon className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Filter icon */}
+        <div className="relative" ref={filterRef}>
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            className={`relative flex h-10 w-10 items-center justify-center rounded-xl border transition-colors ${
+              activeFilterCount > 0 || showFilters
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+            }`}
+          >
+            <AdjustmentsHorizontalIcon className="h-5 w-5" />
+            {activeFilterCount > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+
+          {showFilters && (
+            <div className="absolute right-0 top-12 z-30 w-72 rounded-2xl bg-white p-4 shadow-xl ring-1 ring-slate-200/80">
+              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">Filters</p>
+
+              {/* Category */}
+              {categories.length > 0 && (
+                <div className="mb-4">
+                  <p className="mb-2 text-xs font-semibold text-slate-600">Category</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[{ key: '', label: 'All' }, ...categories.map(c => ({ key: c, label: c }))].map(opt => (
+                      <button
+                        key={opt.key}
+                        onClick={() => setSelectedCategory(opt.key)}
+                        className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
+                          selectedCategory === opt.key ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Stock */}
+              <div className="mb-4">
+                <p className="mb-2 text-xs font-semibold text-slate-600">Stock</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { key: '', label: 'All' },
+                    { key: 'in_stock', label: 'In Stock' },
+                    { key: 'low_stock', label: 'Low (1–10)' },
+                    { key: 'out_stock', label: 'Out of Stock' },
+                  ].map(opt => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setSelectedStock(opt.key)}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
+                        selectedStock === opt.key ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div>
+                <p className="mb-2 text-xs font-semibold text-slate-600">Status</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { key: '', label: 'All' },
+                    { key: 'active', label: 'Active' },
+                    { key: 'draft', label: 'Draft' },
+                    { key: 'featured', label: '⭐ Featured' },
+                  ].map(opt => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setSelectedStatus(opt.key)}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
+                        selectedStatus === opt.key ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {activeFilterCount > 0 && (
+                <div className="mt-4 border-t border-slate-100 pt-3">
+                  <button
+                    onClick={() => { setSelectedCategory(''); setSelectedStock(''); setSelectedStatus(''); }}
+                    className="text-xs font-medium text-red-500 hover:text-red-600"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Desktop Table */}

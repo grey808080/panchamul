@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/Button';
 import ImageUploader from './ImageUploader';
 import { createPublicClient } from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
 import type { Tables } from '@/types/database';
 
 type Product = Tables<'products'>;
@@ -64,12 +65,20 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
         .from('products')
         .update(payload)
         .eq('id', initialData.id);
-      if (error) alert('Error updating product: ' + error.message);
-      else router.push('/admin/products');
+      if (error) {
+        toast.error('Error updating product: ' + error.message);
+      } else {
+        toast.success('Product updated!');
+        router.push('/admin/products');
+      }
     } else {
       const { error } = await supabase.from('products').insert(payload);
-      if (error) alert('Error creating product: ' + error.message);
-      else router.push('/admin/products');
+      if (error) {
+        toast.error('Error creating product: ' + error.message);
+      } else {
+        toast.success('Product created!');
+        router.push('/admin/products');
+      }
     }
 
     setLoading(false);

@@ -18,14 +18,20 @@ interface OrderItem {
   unit_price: number;
 }
 
-// Status workflow — each status with display config
-const STATUS_OPTIONS = [
-  { value: 'received',         label: 'Received',         icon: '📥', desc: 'Order placed',          activeClass: 'bg-blue-500 text-white ring-blue-500',   inactiveClass: 'bg-blue-50 text-blue-700 ring-blue-200 hover:bg-blue-100' },
-  { value: 'processing',       label: 'Processing',       icon: '⚙️', desc: 'Being prepared',        activeClass: 'bg-amber-500 text-white ring-amber-500',  inactiveClass: 'bg-amber-50 text-amber-700 ring-amber-200 hover:bg-amber-100' },
-  { value: 'out_for_delivery', label: 'Out for Delivery', icon: '🚚', desc: 'On the way',            activeClass: 'bg-purple-500 text-white ring-purple-500',inactiveClass: 'bg-purple-50 text-purple-700 ring-purple-200 hover:bg-purple-100' },
-  { value: 'delivered',        label: 'Delivered',        icon: '✅', desc: 'Completed',             activeClass: 'bg-green-500 text-white ring-green-500',  inactiveClass: 'bg-green-50 text-green-700 ring-green-200 hover:bg-green-100' },
-  { value: 'cancelled',        label: 'Cancelled',        icon: '❌', desc: 'Order cancelled',       activeClass: 'bg-red-500 text-white ring-red-500',      inactiveClass: 'bg-red-50 text-red-700 ring-red-200 hover:bg-red-100' },
+// Main pipeline steps (left → right)
+const PIPELINE_STEPS = [
+  { value: 'received',         label: 'Received',         desc: 'Order placed' },
+  { value: 'processing',       label: 'Processing',       desc: 'Being prepared' },
+  { value: 'out_for_delivery', label: 'Out for Delivery', desc: 'On the way' },
+  { value: 'delivered',        label: 'Delivered',        desc: 'Completed' },
 ] as const;
+
+const STEP_COLORS: Record<string, { ring: string; bg: string; text: string; dot: string }> = {
+  received:         { ring: 'ring-blue-500',   bg: 'bg-blue-500',   text: 'text-blue-600',   dot: 'bg-blue-500' },
+  processing:       { ring: 'ring-amber-500',  bg: 'bg-amber-500',  text: 'text-amber-600',  dot: 'bg-amber-500' },
+  out_for_delivery: { ring: 'ring-violet-500', bg: 'bg-violet-500', text: 'text-violet-600', dot: 'bg-violet-500' },
+  delivered:        { ring: 'ring-emerald-500',bg: 'bg-emerald-500',text: 'text-emerald-600',dot: 'bg-emerald-500' },
+};
 
 const PAYMENT_LABELS: Record<string, string> = {
   cod:           'Cash on Delivery',
@@ -35,6 +41,9 @@ const PAYMENT_LABELS: Record<string, string> = {
 };
 
 type OrderStatus = 'received' | 'processing' | 'out_for_delivery' | 'delivered' | 'cancelled';
+
+const PIPELINE_ORDER = ['received', 'processing', 'out_for_delivery', 'delivered'] as const;
+type PipelineStep = typeof PIPELINE_ORDER[number];
 
 export default function OrderDetailClient({ order }: { order: Order }) {
   const router = useRouter();
@@ -158,32 +167,127 @@ export default function OrderDetailClient({ order }: { order: Order }) {
         </div>
       )}
 
-      {/* ── Status selector ── */}
-      <div className="mb-8 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60">
-        <div className="flex items-center justify-between mb-4">
+      {/* ── Order Status Pipeline ── */}
+      <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-base font-bold text-slate-800">Order Status</h2>
-          {loading && <span className="text-xs text-slate-400 animate-pulse">Updating…</span>}
+          {loading && (
+            <span className="flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-400 animate-pulse" />
+              Updating…
+            </span>
+          )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          {STATUS_OPTIONS.map((opt) => {
-            const isActive = status === opt.value;
+
+        {/* Main pipeline: Received → Processing → Out for Delivery → Delivered */}
+        <div className="flex items-start gap-0">
+          {PIPELINE_STEPS.map((step, i) => {
+            const pipelineIdx   = PIPELINE_ORDER.indexOf(step.value as PipelineStep);
+            const currentIdx    = status === 'cancelled' ? -1 : PIPELINE_ORDER.indexOf(status as PipelineStep);
+            const isActive      = status === step.value;
+            const isCompleted   = currentIdx > pipelineIdx;
+            const isFuture      = currentIdx < pipelineIdx && status !== 'cancelled';
+            const colors        = STEP_COLORS[step.value];
+            const isLast        = i === PIPELINE_STEPS.length - 1;
+
             return (
-              <button
-                key={opt.value}
-                onClick={() => handleStatusChange(opt.value)}
-                disabled={loading}
-                className={`flex flex-col items-center gap-1 rounded-xl p-3 text-center ring-1 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${
-                  isActive ? opt.activeClass : opt.inactiveClass
-                }`}
-              >
-                <span className="text-xl">{opt.icon}</span>
-                <span className="text-xs font-semibold leading-tight">{opt.label}</span>
-                <span className={`text-[10px] leading-tight ${isActive ? 'text-white/80' : 'opacity-60'}`}>
-                  {opt.desc}
-                </span>
-              </button>
+              <div key={step.value} className="flex items-start flex-1 min-w-0">
+                {/* Step node */}
+                <div className="flex flex-col items-center flex-1 min-w-0">
+                  <button
+                    onClick={() => handleStatusChange(step.value)}
+                    disabled={loading}
+                    title={step.desc}
+                    className={[
+                      'relative flex flex-col items-center gap-2 w-full px-2 py-3 rounded-xl transition-all duration-200 group',
+                      'disabled:cursor-not-allowed',
+                      isActive
+                        ? `ring-2 ${colors.ring} bg-slate-50`
+                        : isCompleted
+                        ? 'hover:bg-slate-50'
+                        : isFuture
+                        ? 'opacity-40 hover:opacity-60 hover:bg-slate-50'
+                        : 'hover:bg-slate-50',
+                    ].join(' ')}
+                  >
+                    {/* Circle indicator */}
+                    <span
+                      className={[
+                        'flex h-9 w-9 items-center justify-center rounded-full ring-2 transition-all duration-300 text-sm font-bold',
+                        isActive
+                          ? `${colors.bg} ring-transparent text-white shadow-lg`
+                          : isCompleted
+                          ? `bg-slate-800 ring-transparent text-white`
+                          : 'bg-slate-100 ring-slate-200 text-slate-400',
+                      ].join(' ')}
+                    >
+                      {isCompleted ? (
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : isActive ? (
+                        <span className={`h-2.5 w-2.5 rounded-full bg-white`} />
+                      ) : (
+                        <span className="h-2 w-2 rounded-full bg-slate-300" />
+                      )}
+                    </span>
+
+                    {/* Label */}
+                    <div className="text-center">
+                      <p className={`text-xs font-semibold leading-tight ${
+                        isActive ? colors.text : isCompleted ? 'text-slate-700' : 'text-slate-400'
+                      }`}>
+                        {step.label}
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-0.5 hidden sm:block">{step.desc}</p>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Arrow connector */}
+                {!isLast && (
+                  <div className="flex items-center self-start pt-[18px] px-0.5 shrink-0">
+                    <svg
+                      className={`h-4 w-4 transition-colors duration-300 ${
+                        currentIdx > i ? 'text-slate-700' : 'text-slate-200'
+                      }`}
+                      viewBox="0 0 16 16"
+                      fill="none"
+                    >
+                      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                )}
+              </div>
             );
           })}
+        </div>
+
+        {/* Divider with downward branch indicator */}
+        <div className="mt-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-100" />
+          <span className="text-[10px] uppercase tracking-widest text-slate-300 font-medium">or</span>
+          <div className="h-px flex-1 bg-slate-100" />
+        </div>
+
+        {/* Cancel branch */}
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={() => handleStatusChange('cancelled')}
+            disabled={loading || status === 'delivered'}
+            className={[
+              'flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium ring-1 transition-all duration-200',
+              'disabled:opacity-30 disabled:cursor-not-allowed',
+              status === 'cancelled'
+                ? 'bg-red-500 text-white ring-red-500 shadow-md'
+                : 'bg-red-50 text-red-600 ring-red-200 hover:bg-red-100',
+            ].join(' ')}
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            {status === 'cancelled' ? 'Cancelled' : 'Cancel Order'}
+          </button>
         </div>
       </div>
 

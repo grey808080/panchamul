@@ -73,6 +73,9 @@ export default async function AdminDashboard() {
               </div>
               <p className="font-medium text-slate-900">{order.customer_name}</p>
               <p className="text-sm text-slate-500">{order.customer_phone}</p>
+              <p className="text-xs text-slate-400">
+                {order.created_at ? new Date(order.created_at).toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+              </p>
               <div className="mt-2 flex items-center justify-between">
                 <span className="text-sm text-slate-400">{order.payment_method?.toUpperCase()}</span>
                 <span className="font-bold text-slate-900">{formatPrice(order.total)}</span>
@@ -92,6 +95,7 @@ export default async function AdminDashboard() {
                 <th className="px-4 py-3 font-medium rounded-l-lg">Order #</th>
                 <th className="px-4 py-3 font-medium">Customer</th>
                 <th className="px-4 py-3 font-medium">Total</th>
+                <th className="px-4 py-3 font-medium">Date</th>
                 <th className="px-4 py-3 font-medium rounded-r-lg">Status</th>
               </tr>
             </thead>
@@ -101,6 +105,9 @@ export default async function AdminDashboard() {
                   <td className="px-4 py-3 font-mono font-medium text-primary">{order.order_number}</td>
                   <td className="px-4 py-3">{order.customer_name}</td>
                   <td className="px-4 py-3 font-medium">{formatPrice(order.total)}</td>
+                  <td className="px-4 py-3 text-sm text-slate-500">
+                    {order.created_at ? new Date(order.created_at).toLocaleDateString('en-NP', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
                       ${order.status === 'delivered' ? 'bg-green-100 text-green-800' :

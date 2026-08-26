@@ -6,10 +6,19 @@ import { routing } from './i18n/routing'
 const handleI18nRouting = createIntlMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
-  // 1. Run next-intl first — it internally rewrites paths like /products
-  //    to /en/products so the [locale] segment in the file system is populated.
-  //    With localePrefix: 'never' the browser URL stays clean (/products).
-  const response = handleI18nRouting(request);
+  const { pathname } = request.nextUrl;
+
+  // Skip i18n rewriting for routes that live outside [locale] —
+  // admin, api, and auth have their own handlers and must not be mangled.
+  const isNonLocaleRoute =
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/auth');
+
+  // 1. Run next-intl only for locale-aware routes.
+  const response = isNonLocaleRoute
+    ? NextResponse.next()
+    : handleI18nRouting(request);
 
   // 2. Layer Supabase session management on top of that response.
   const supabase = createServerClient(

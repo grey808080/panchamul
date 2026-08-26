@@ -5,6 +5,7 @@ import { createPublicClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import Image from 'next/image';
 import { useDropzone } from 'react-dropzone';
+import toast from 'react-hot-toast';
 import {
   PlusIcon, PencilIcon, XMarkIcon,
   ArrowPathIcon, PhotoIcon
@@ -113,6 +114,7 @@ export default function AdminElectriciansPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const supabase = createPublicClient();
   useLockBodyScroll(showForm);
 
@@ -150,7 +152,7 @@ export default function AdminElectriciansPage() {
 
   const handleSave = async () => {
     if (!form.name || !form.phone) {
-      alert('Name and phone are required');
+      toast.error('Name and phone are required');
       return;
     }
     setSaving(true);
@@ -170,10 +172,18 @@ export default function AdminElectriciansPage() {
 
     if (editingId) {
       const { error } = await supabase.from('electricians').update(payload).eq('id', editingId);
-      if (error) alert('Error: ' + error.message);
+      if (error) {
+        toast.error('Error updating: ' + error.message);
+      } else {
+        toast.success('Electrician updated');
+      }
     } else {
       const { error } = await supabase.from('electricians').insert(payload);
-      if (error) alert('Error: ' + error.message);
+      if (error) {
+        toast.error('Error adding: ' + error.message);
+      } else {
+        toast.success('Electrician added');
+      }
     }
 
     setSaving(false);
@@ -187,9 +197,18 @@ export default function AdminElectriciansPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this electrician?')) return;
-    await supabase.from('electricians').delete().eq('id', id);
-    fetchElectricians();
+    if (pendingDeleteId !== id) {
+      setPendingDeleteId(id);
+      return;
+    }
+    setPendingDeleteId(null);
+    const { error } = await supabase.from('electricians').delete().eq('id', id);
+    if (error) {
+      toast.error('Failed to delete: ' + error.message);
+    } else {
+      toast.success('Electrician removed');
+      setElectricians(prev => prev.filter(e => e.id !== id));
+    }
   };
 
   return (
@@ -376,12 +395,29 @@ export default function AdminElectriciansPage() {
                 <Button variant="outline" className="px-3" onClick={() => openEdit(elec)}>
                   <PencilIcon className="h-4 w-4" />
                 </Button>
-                <button
-                  onClick={() => handleDelete(elec.id)}
-                  className="px-3 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-colors"
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                </button>
+                {pendingDeleteId === elec.id ? (
+                  <>
+                    <button
+                      onClick={() => handleDelete(elec.id)}
+                      className="px-3 rounded-xl bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition-colors"
+                    >
+                      Yes
+                    </button>
+                    <button
+                      onClick={() => setPendingDeleteId(null)}
+                      className="px-3 rounded-xl border border-slate-200 text-slate-500 text-xs hover:bg-slate-50 transition-colors"
+                    >
+                      No
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => handleDelete(elec.id)}
+                    className="px-3 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-colors"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
           ))}
