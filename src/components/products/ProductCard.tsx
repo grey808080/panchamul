@@ -101,9 +101,9 @@ export default function ProductCard({ product }: ProductCardProps) {
         <button
           onClick={handleAddToCart}
           disabled={stockQty <= 0}
-          className={`absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded border transition-all duration-200 disabled:cursor-not-allowed sm:opacity-0 sm:translate-y-1 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 ${
+          className={`absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded border transition-all duration-200 disabled:cursor-not-allowed ${
             added
-              ? 'border-emerald-500 bg-emerald-500 text-white opacity-100 translate-y-0'
+              ? 'border-emerald-500 bg-emerald-500 text-white'
               : 'border-primary bg-primary text-white hover:bg-primary-light disabled:opacity-40'
           }`}
           aria-label={t('addToCart')}

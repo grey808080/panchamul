@@ -1,8 +1,10 @@
 import { createPublicClient } from '@/lib/supabase/server';
 import HeroBanner from '@/components/home/HeroBanner';
-import TrustBadges from '@/components/home/TrustBadges';
+import TrendingNow from '@/components/home/TrendingNow';
+import RecommendedForYou from '@/components/home/RecommendedForYou';
+import FlashDeals from '@/components/home/FlashDeals';
 import CategoryGrid from '@/components/home/CategoryGrid';
-import FeaturedProductsClient from '@/components/home/FeaturedProductsClient';
+import RecentlyViewed from '@/components/home/RecentlyViewed';
 import { setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { PhoneIcon } from '@heroicons/react/24/outline';
@@ -19,31 +21,65 @@ export default async function HomePage({
 
   const supabase = createPublicClient();
 
-  const [{ data: categories }, { data: featured }] = await Promise.all([
-    supabase.from('categories').select('*').order('display_order', { ascending: true }),
-    supabase.from('products').select('*').eq('is_active', true).eq('is_featured', true)
-      .order('created_at', { ascending: false }).limit(8),
+  const [
+    { data: categories },
+    { data: trending },
+    { data: deals },
+  ] = await Promise.all([
+    // Categories for the nav grid
+    supabase
+      .from('categories')
+      .select('*')
+      .order('display_order', { ascending: true }),
+
+    // Trending: featured products — admin-curated popular items
+    supabase
+      .from('products')
+      .select('*')
+      .eq('is_active', true)
+      .eq('is_featured', true)
+      .order('created_at', { ascending: false })
+      .limit(10),
+
+    // Flash deals: products with a discount price
+    supabase
+      .from('products')
+      .select('*')
+      .eq('is_active', true)
+      .gt('compare_price', 0)
+      .order('created_at', { ascending: false })
+      .limit(10),
   ]);
 
   return (
-    <div>
-      {/* 1. Hero — full viewport height */}
+    <div className="bg-white">
+
+      {/* 1. Hero — compact carousel */}
       <HeroBanner />
 
-      {/* 2. Trust strip */}
-      <TrustBadges />
+      {/* 2. Recommended For You — client-side personalization.
+              Reads localStorage, queries Supabase for products in browsed categories.
+              Renders nothing on first visit (no history yet). */}
+      <RecommendedForYou />
 
-      {/* 3. Categories */}
+      {/* 3. Trending Now — the primary product discovery section.
+              Admin-curated featured products shown prominently. */}
+      <TrendingNow products={trending || []} />
+
+      {/* 4. Flash Deals — discounted products with countdown timer */}
+      <FlashDeals products={deals || []} />
+
+      {/* 5. Recently Viewed — compact horizontal scroll strip.
+              Only renders once user has 2+ viewed products. */}
+      <RecentlyViewed />
+
+      {/* 6. Shop by Category — navigation aid, intentionally lower on page */}
       <CategoryGrid categories={categories || []} />
 
-      {/* 4. Featured products */}
-      <FeaturedProductsClient products={featured || []} />
-
-      {/* 5. CTA strip — dark, bridges into footer */}
+      {/* 7. CTA strip */}
       <section className="bg-surface-bg border-t border-surface-border">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:py-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
             <Link
               href="/electricians"
               className="group flex items-center gap-4 rounded-lg border border-surface-border bg-surface-card p-4 sm:p-5 transition-all hover:border-primary active:scale-[0.99]"
@@ -69,10 +105,10 @@ export default async function HomePage({
                 <p className="text-xs text-ink-secondary mt-0.5 truncate">+977-9849401009 · Kohalpur →</p>
               </div>
             </a>
-
           </div>
         </div>
       </section>
+
     </div>
   );
 }

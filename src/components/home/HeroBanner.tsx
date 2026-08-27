@@ -1,130 +1,180 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from '@/i18n/navigation';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+
+const SLIDES = [
+  {
+    tag: "Nepal's #1 Electrical Store",
+    headline: 'Power Your Home\n& Business',
+    sub: 'Wires, switches, circuit breakers & more — shipped across Nepal.',
+    cta: { label: 'Shop Now', href: '/products' },
+    alt: { label: 'View Deals →', href: '/products' },
+    accent: '#FF6B00',
+    bgGlow: 'rgba(255,107,0,0.12)',
+    emoji: '⚡',
+  },
+  {
+    tag: 'New Arrivals',
+    headline: 'Latest Products\nJust Landed',
+    sub: 'Fresh stock from trusted brands. Quality guaranteed with every purchase.',
+    cta: { label: 'New Arrivals', href: '/products' },
+    alt: { label: 'See All →', href: '/products' },
+    accent: '#3B82F6',
+    bgGlow: 'rgba(59,130,246,0.10)',
+    emoji: '🔌',
+  },
+  {
+    tag: 'Expert Service',
+    headline: 'Need a Certified\nElectrician?',
+    sub: 'Certified pros in Kohalpur & surrounding areas. Fast, reliable service.',
+    cta: { label: 'Find Electrician', href: '/electricians' },
+    alt: { label: 'Call Us →', href: 'tel:+9779849401009' },
+    accent: '#10B981',
+    bgGlow: 'rgba(16,185,129,0.10)',
+    emoji: '👷',
+  },
+];
 
 export default function HeroBanner() {
-  const t = useTranslations('home');
+  const [current, setCurrent] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+
+  const goTo = useCallback((idx: number) => {
+    setCurrent(idx);
+    setAnimKey((k) => k + 1);
+  }, []);
+
+  const next = useCallback(() => goTo((current + 1) % SLIDES.length), [current, goTo]);
+  const prev = useCallback(() => goTo((current - 1 + SLIDES.length) % SLIDES.length), [current, goTo]);
+
+  useEffect(() => {
+    const t = setInterval(next, 5500);
+    return () => clearInterval(t);
+  }, [next]);
+
+  const slide = SLIDES[current];
 
   return (
-    <section
-      className="
-        relative overflow-hidden bg-surface-bg
-        flex items-center
-        sm:min-h-[calc(100vh-56px)]
-
-      "
-    >
-      {/* ── Background: orange grid ── */}
+    <section className="relative overflow-hidden bg-[#0D0D0D] h-[300px] sm:h-[360px] lg:h-[400px]">
+      {/* Animated background glow */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        key={`glow-${animKey}`}
+        className="absolute inset-0 transition-all duration-700"
         style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,107,0,0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,107,0,0.06) 1px, transparent 1px)
-          `,
-          backgroundSize: '48px 48px',
+          background: `radial-gradient(ellipse 60% 80% at 20% 50%, ${slide.bgGlow} 0%, transparent 70%)`,
         }}
       />
 
-      {/* ── Background: orange radial glow bottom-left ── */}
+      {/* Grid overlay */}
       <div
-        className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(255,107,0,0.10) 0%, transparent 65%)' }}
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,107,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,107,0,0.04) 1px, transparent 1px)`,
+          backgroundSize: '40px 40px',
+        }}
       />
 
-      {/* ── Background: top-right glow ── */}
-      <div
-        className="absolute -top-20 right-0 h-80 w-80 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(255,107,0,0.07) 0%, transparent 70%)' }}
-      />
-
-      {/* ── Right image panel — desktop only ── */}
-      <div className="absolute inset-y-0 right-0 w-[45%] hidden lg:block pointer-events-none">
-        {/* Left-to-right gradient mask — blends image into dark bg */}
-        <div
-          className="absolute inset-0 z-10"
-          style={{
-            background: 'linear-gradient(to right, #0D0D0D 0%, rgba(13,13,13,0.6) 35%, rgba(13,13,13,0.1) 100%)',
-          }}
-        />
-        <div
-          className="h-full w-full"
-          style={{
-            backgroundImage: 'url(/hero-electrician.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center top',
-            backgroundColor: '#141414',
-          }}
+      {/* Right emoji panel */}
+      <div className="absolute right-0 top-0 bottom-0 w-[45%] flex items-center justify-center pointer-events-none">
+        <span
+          key={`emoji-${animKey}`}
+          className="text-[140px] sm:text-[180px] lg:text-[200px] opacity-[0.07] select-none animate-fade-in"
+          style={{ lineHeight: 1 }}
         >
-          {/* Fallback SVG when no photo */}
-          <div className="h-full w-full flex items-center justify-center">
-            <svg viewBox="0 0 320 400" className="w-72 opacity-[0.06]" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="40" y="40" width="240" height="320" rx="4" stroke="#FF6B00" strokeWidth="2"/>
-              <rect x="60" y="70" width="200" height="20" rx="2" fill="#FF6B00" opacity="0.4"/>
-              {[110, 140, 170, 200, 230, 260, 290].map((y, i) => (
-                <g key={i}>
-                  <rect x="70"  y={y} width="40" height="16" rx="2" stroke="#FF6B00" strokeWidth="1.5" opacity="0.5"/>
-                  <rect x="120" y={y} width="40" height="16" rx="2" stroke="#FF6B00" strokeWidth="1.5" opacity="0.5"/>
-                  <rect x="170" y={y} width="40" height="16" rx="2" stroke="#FF6B00" strokeWidth="1.5" opacity="0.5"/>
-                  <rect x="220" y={y} width="40" height="16" rx="2" stroke="#FF6B00" strokeWidth="1.5" opacity="0.5"/>
-                </g>
-              ))}
-              <path d="M155 160 L140 195 L155 195 L145 230 L170 190 L153 190 L165 160Z" fill="#FF6B00" opacity="0.6"/>
-            </svg>
+          {slide.emoji}
+        </span>
+        {/* Right-side gradient mask */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0D0D0D 0%, transparent 30%)' }} />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 h-full flex items-center">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
+          <div key={`content-${animKey}`} className="max-w-lg animate-slide-up">
+            {/* Tag pill */}
+            <span
+              className="inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border mb-3"
+              style={{
+                color: slide.accent,
+                borderColor: `${slide.accent}40`,
+                backgroundColor: `${slide.accent}18`,
+              }}
+            >
+              {slide.tag}
+            </span>
+
+            {/* Headline */}
+            <h1
+              className="font-heading font-bold text-white leading-tight text-[clamp(1.6rem,4.5vw,2.6rem)]"
+              style={{ whiteSpace: 'pre-line' }}
+            >
+              {slide.headline}
+            </h1>
+
+            {/* Sub */}
+            <p className="mt-2.5 text-[13px] text-slate-400 leading-relaxed max-w-sm">
+              {slide.sub}
+            </p>
+
+            {/* CTAs */}
+            <div className="mt-5 flex items-center gap-4">
+              <Link href={slide.cta.href}>
+                <button
+                  className="inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg transition-all duration-200 hover:brightness-110 active:scale-[0.97]"
+                  style={{ backgroundColor: slide.accent, boxShadow: `0 4px 20px ${slide.accent}50` }}
+                >
+                  {slide.cta.label}
+                </button>
+              </Link>
+              <Link
+                href={slide.alt.href}
+                className="text-[12px] font-semibold text-slate-400 hover:text-white transition-colors"
+              >
+                {slide.alt.label}
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Content ── */}
-      <div className="relative z-20 w-full mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 sm:py-24">
-        <div className="max-w-lg lg:max-w-xl">
+      {/* Left arrow */}
+      <button
+        onClick={prev}
+        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 h-8 w-8 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors backdrop-blur-sm"
+        aria-label="Previous slide"
+      >
+        <ChevronLeftIcon className="h-4 w-4" />
+      </button>
 
-          {/* Headline */}
-          <h1 className="font-heading font-bold leading-[1.08] text-white
-            text-[clamp(2rem,6vw,3.75rem)]
-          ">
-            {t('headline')}
-          </h1>
+      {/* Right arrow */}
+      <button
+        onClick={next}
+        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 h-8 w-8 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors backdrop-blur-sm"
+        aria-label="Next slide"
+      >
+        <ChevronRightIcon className="h-4 w-4" />
+      </button>
 
-          {/* Subheadline */}
-          <p className="mt-4 text-sm text-slate-300 leading-relaxed max-w-sm sm:max-w-md">
-            {t('subheadline')}
-          </p>
-
-          {/* CTAs */}
-          <div className="mt-7 flex flex-wrap gap-3 pb-12sm:pb-0">
-            <Link href="/products">
-              <button className="btn-primary text-xs uppercase tracking-wider px-6 py-3 min-w-[130px]">
-                {t('shopNow')}
-              </button>
-            </Link>
-            <Link href="/electricians">
-              <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/30 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-white transition-all hover:border-white/60 hover:bg-white/10 active:scale-[0.98] min-w-[130px]">
-                {t('findElectrician')}
-              </button>
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div className="mt-10 grid grid-cols-3 gap-4 border-t border-white/10 pt-8 max-w-xs sm:max-w-smi">
-            {[
-              { value: '15+',   label: t('yearsExp') },
-              { value: '500+',  label: t('productsCount') },
-              { value: '1000+', label: t('happyCustomers') },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <p className="font-heading text-2xl sm:text-3xl font-bold text-primary">{stat.value}</p>
-                <p className="text-[10px] sm:text-[11px] text-slate-400 uppercase tracking-wider mt-0.5 leading-tight">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Dots */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+        {SLIDES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => goTo(i)}
+            aria-label={`Go to slide ${i + 1}`}
+            className="rounded-full transition-all duration-300"
+            style={{
+              width: i === current ? '20px' : '6px',
+              height: '6px',
+              backgroundColor: i === current ? slide.accent : 'rgba(255,255,255,0.25)',
+            }}
+          />
+        ))}
       </div>
 
-      {/* Bottom edge accent */}
+      {/* Bottom border accent */}
       <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
     </section>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { ShoppingCartIcon, MinusIcon, PlusIcon, CheckIcon, XMarkIcon, MagnifyingGlassPlusIcon } from '@heroicons/react/24/outline';
 import { Link } from '@/i18n/navigation';
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import ProductCard from '@/components/products/ProductCard';
 import toast from 'react-hot-toast';
 import { useLockBodyScroll } from '@/lib/hooks/useLockBodyScroll';
+import { saveRecentlyViewed } from '@/components/home/RecentlyViewed';
 import type { Tables } from '@/types/database';
 type Product = Tables<'products'>;
 
@@ -40,6 +41,40 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useLockBodyScroll(lightboxOpen);
+
+  // Track in localStorage for "Recently Viewed" and "Recommended For You" on homepage
+  useEffect(() => {
+    saveRecentlyViewed({
+      id: product.id,
+      slug: product.slug,
+      name_en: product.name_en,
+      name_np: product.name_np,
+      price: product.price,
+      compare_price: product.compare_price,
+      images: product.images,
+      brand: product.brand,
+      category_id: product.category_id, // powers recommendation engine
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
+
+  // Increment view_count on Supabase — fire-and-forget, once per browser session per product.
+  //
+  // Client-side sessionStorage guard prevents:
+  //   1. React StrictMode double-firing effects in dev (would inflate counts during testing)
+  //   2. Multiple increments from the same tab/visit (e.g. user navigating away and back)
+  //
+  // Note: sessionStorage is per-tab, so opening the same product in a new tab does count
+  // as a fresh view — which is the correct user-intent interpretation.
+  useEffect(() => {
+    const guardKey = `viewed::${product.slug}`;
+    if (sessionStorage.getItem(guardKey)) return; // already counted this session
+    sessionStorage.setItem(guardKey, '1');
+
+    fetch(`/api/products/${product.slug}/view`, { method: 'POST' })
+      .catch(() => {}); // silently ignore network errors — view counts are best-effort
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.slug]);
 
   const name = locale === 'np' && product.name_np ? product.name_np : product.name_en;
   const description = locale === 'np' && product.description_np ? product.description_np : product.description_en;
