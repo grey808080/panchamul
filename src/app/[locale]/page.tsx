@@ -1,5 +1,4 @@
 import { createPublicClient } from '@/lib/supabase/server';
-import HeroBanner from '@/components/home/HeroBanner';
 import TrendingNow from '@/components/home/TrendingNow';
 import RecommendedForYou from '@/components/home/RecommendedForYou';
 import FlashDeals from '@/components/home/FlashDeals';
@@ -32,13 +31,15 @@ export default async function HomePage({
       .select('*')
       .order('display_order', { ascending: true }),
 
-    // Trending: featured products — admin-curated popular items
+    // Trending: real view_count ranking — falls back to is_featured during cold-start.
+    // view_count is incremented by /api/products/[slug]/view (once per session per product).
+    // Once enough data accumulates (days of real traffic), this becomes fully data-driven.
     supabase
       .from('products')
       .select('*')
       .eq('is_active', true)
-      .eq('is_featured', true)
-      .order('created_at', { ascending: false })
+      .order('view_count', { ascending: false })
+      .order('is_featured', { ascending: false }) // secondary sort: admin-curated wins ties
       .limit(10),
 
     // Flash deals: products with a discount price
@@ -54,16 +55,14 @@ export default async function HomePage({
   return (
     <div className="bg-white">
 
-      {/* 1. Hero — compact carousel */}
-      <HeroBanner />
-
-      {/* 2. Recommended For You — client-side personalization.
+      {/* 1. Recommended For You — client-side personalization.
               Reads localStorage, queries Supabase for products in browsed categories.
               Renders nothing on first visit (no history yet). */}
       <RecommendedForYou />
 
-      {/* 3. Trending Now — the primary product discovery section.
-              Admin-curated featured products shown prominently. */}
+      {/* 3. Trending Now — data-driven via view_count DESC (real trending).
+              Falls back to admin-curated is_featured during cold-start
+              when all view_counts are still 0. */}
       <TrendingNow products={trending || []} />
 
       {/* 4. Flash Deals — discounted products with countdown timer */}

@@ -4,3 +4,4 @@ next/*
 .vscode/
 .env.local
 plans/
+supabase/migrations/
