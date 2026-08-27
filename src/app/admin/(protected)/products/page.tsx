@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createPublicClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils/formatPrice';
@@ -9,6 +10,7 @@ import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon, AdjustmentsHorizo
 import Image from 'next/image';
 import type { Tables } from '@/types';
 import toast from 'react-hot-toast';
+import { LOW_STOCK_THRESHOLD } from '@/lib/constants/stock';
 
 type ProductWithCategory = Tables<'products'> & {
   categories: Pick<Tables<'categories'>, 'name_en'> | null;
@@ -19,10 +21,11 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState('');
-  // Filter state
+  // Filter state — pre-fill from URL param (e.g. ?stock=low_stock from dashboard alert)
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedStock, setSelectedStock] = useState('');
+  const [selectedStock, setSelectedStock] = useState(() => searchParams.get('stock') || '');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -89,8 +92,8 @@ export default function AdminProductsPage() {
     const stock = p.stock_qty ?? 0;
     const matchesStock =
       !selectedStock ||
-      (selectedStock === 'in_stock'    && stock > 10) ||
-      (selectedStock === 'low_stock'   && stock > 0 && stock <= 10) ||
+      (selectedStock === 'in_stock'    && stock > LOW_STOCK_THRESHOLD) ||
+      (selectedStock === 'low_stock'   && stock > 0 && stock <= LOW_STOCK_THRESHOLD) ||
       (selectedStock === 'out_stock'   && stock === 0);
     const matchesStatus =
       !selectedStatus ||
@@ -311,7 +314,7 @@ export default function AdminProductsPage() {
                 </td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    (product.stock_qty ?? 0) > 10 ? 'bg-green-100 text-green-800' :
+                    (product.stock_qty ?? 0) > LOW_STOCK_THRESHOLD ? 'bg-green-100 text-green-800' :
                     (product.stock_qty ?? 0) > 0 ? 'bg-amber-100 text-amber-800' :
                     'bg-red-100 text-red-800'
                   }`}>
@@ -392,7 +395,9 @@ export default function AdminProductsPage() {
                     {product.is_active ? 'Active' : 'Draft'}
                   </span>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                    (product.stock_qty ?? 0) > 0 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+                    (product.stock_qty ?? 0) > LOW_STOCK_THRESHOLD ? 'bg-green-100 text-green-800' :
+                    (product.stock_qty ?? 0) > 0 ? 'bg-amber-100 text-amber-800' :
+                    'bg-red-100 text-red-800'
                   }`}>
                     {product.stock_qty ?? 0} pcs
                   </span>

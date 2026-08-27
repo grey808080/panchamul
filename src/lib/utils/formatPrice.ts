@@ -1,10 +1,10 @@
 /**
  * Format a number as NPR currency
- * @example formatPrice(1200) => "रु 1,200"
+ * @example formatPrice(1200) => "Rs 1,200"
  */
 export function formatPrice(amount: number, locale: string = 'en'): string {
   const formatted = new Intl.NumberFormat(locale === 'np' ? 'ne-NP' : 'en-IN').format(amount);
-  return `रु ${formatted}`;
+  return `Rs ${formatted}`;
 }
 
 /**

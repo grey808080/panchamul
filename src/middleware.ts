@@ -20,7 +20,18 @@ export async function middleware(request: NextRequest) {
     ? NextResponse.next()
     : handleI18nRouting(request);
 
-  // 2. Layer Supabase session management on top of that response.
+  // 2. Only run Supabase auth checks for admin routes.
+  //    This avoids making network calls to Supabase on every public request.
+  if (!pathname.startsWith('/admin')) {
+    return response;
+  }
+
+  // Allow the login page through without an auth check.
+  if (pathname === '/admin/login') {
+    return response;
+  }
+
+  // 3. Create the Supabase client and verify the session.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -41,31 +52,38 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session
-  const { data: { user } } = await supabase.auth.getUser()
+  // Wrap in try-catch: a network failure calling Supabase should redirect to
+  // login rather than throw an unhandled error and crash the middleware.
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // fetch failed (offline / bad env var) — treat as unauthenticated
+    return NextResponse.redirect(new URL('/admin/login', request.url));
+  }
 
-  // Protect admin routes
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (request.nextUrl.pathname === '/admin/login') {
-      return response
-    }
+  if (!user) {
+    return NextResponse.redirect(new URL('/admin/login', request.url));
+  }
 
-    if (!user) {
-      return NextResponse.redirect(new URL('/admin/login', request.url))
-    }
-
+  // Verify admin flag on the profile
+  try {
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin')
       .eq('id', user.id)
-      .single()
+      .single();
 
     if (!profile?.is_admin) {
-      return NextResponse.redirect(new URL('/', request.url))
+      return NextResponse.redirect(new URL('/', request.url));
     }
+  } catch {
+    // If the profile check fails, deny access rather than grant it
+    return NextResponse.redirect(new URL('/admin/login', request.url));
   }
 
-  return response
+  return response;
 }
 
 export const config = {

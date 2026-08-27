@@ -11,18 +11,22 @@ import {
   Cog6ToothIcon,
   ArrowLeftOnRectangleIcon,
   BoltIcon,
+  ChartBarIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline';
 import { createPublicClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import NewOrdersBadge from './NewOrdersBadge';
 
 const navItems = [
-  { name: 'Dashboard', href: '/admin', icon: HomeIcon },
-  { name: 'Products', href: '/admin/products', icon: ShoppingBagIcon },
-  { name: 'Orders', href: '/admin/orders', icon: ShoppingCartIcon },
-  { name: 'Electricians', href: '/admin/electricians', icon: UserGroupIcon },
-  { name: 'Gallery', href: '/admin/gallery', icon: PhotoIcon },
-  { name: 'Settings', href: '/admin/settings', icon: Cog6ToothIcon },
+  { name: 'Dashboard',    href: '/admin',               icon: HomeIcon },
+  { name: 'Analytics',   href: '/admin/analytics',      icon: ChartBarIcon },
+  { name: 'Products',    href: '/admin/products',        icon: ShoppingBagIcon },
+  { name: 'Orders',      href: '/admin/orders',          icon: ShoppingCartIcon },
+  { name: 'Customers',   href: '/admin/customers',       icon: UsersIcon },
+  { name: 'Electricians',href: '/admin/electricians',    icon: UserGroupIcon },
+  { name: 'Gallery',     href: '/admin/gallery',         icon: PhotoIcon },
+  { name: 'Settings',    href: '/admin/settings',        icon: Cog6ToothIcon },
 ];
 
 export default function AdminSidebar() {
@@ -93,11 +97,11 @@ export function AdminBottomNav() {
   const pathname = usePathname();
 
   const tabs = [
-    { name: 'Home', href: '/admin', icon: HomeIcon },
-    { name: 'Products', href: '/admin/products', icon: ShoppingBagIcon },
-    { name: 'Orders', href: '/admin/orders', icon: ShoppingCartIcon },
-    { name: 'Team', href: '/admin/electricians', icon: UserGroupIcon },
-    { name: 'More', href: '/admin/settings', icon: Cog6ToothIcon },
+    { name: 'Home',      href: '/admin',            icon: HomeIcon },
+    { name: 'Products',  href: '/admin/products',   icon: ShoppingBagIcon },
+    { name: 'Orders',   href: '/admin/orders',      icon: ShoppingCartIcon },
+    { name: 'Analytics',href: '/admin/analytics',   icon: ChartBarIcon },
+    { name: 'More',     href: '/admin/settings',    icon: Cog6ToothIcon },
   ];
 
   return (
